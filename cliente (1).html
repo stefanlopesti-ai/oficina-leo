@@ -1,0 +1,1423 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Oficina do Léo — Área do Cliente</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --accent:      #F5C400;
+  --accent-dark: #D9AC00;
+  --charcoal:    #1A1A1A;
+  --bg:          #F4F5F7;
+  --surface:     #FFFFFF;
+  --surface2:    #F9FAFB;
+  --border:      #E5E7EB;
+  --text:        #111827;
+  --muted:       #6B7280;
+  --green:       #10B981;
+  --green-bg:    #D1FAE5;
+  --blue:        #2563EB;
+  --blue-bg:     #EEF2FF;
+  --red:         #EF4444;
+  --red-bg:      #FEE2E2;
+  --amber:       #F59E0B;
+  --amber-bg:    #FEF3C7;
+  --radius:      14px;
+  --shadow:      0 2px 16px rgba(0,0,0,0.08);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---- TELAS ---- */
+.tela { display: none; min-height: 100vh; }
+.tela.ativa { display: flex; flex-direction: column; }
+
+/* ==============================
+   TELA DE LOGIN
+   ============================== */
+#tela-login {
+  align-items: center;
+  justify-content: center;
+  padding: 24px 20px;
+  background: var(--charcoal);
+}
+
+.login-box {
+  background: var(--surface);
+  border-radius: 24px;
+  padding: 36px 28px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+
+.login-logo {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.login-logo .logo-icon {
+  width: 64px; height: 64px;
+  background: var(--accent);
+  border-radius: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  margin-bottom: 14px;
+}
+
+.login-logo h1 {
+  font-size: 1.3rem;
+  font-weight: 900;
+  color: var(--text);
+  letter-spacing: -0.3px;
+}
+
+.login-logo p {
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+.login-tabs {
+  display: flex;
+  background: var(--surface2);
+  border-radius: 10px;
+  padding: 4px;
+  margin-bottom: 24px;
+  gap: 4px;
+}
+
+.login-tab {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  background: none;
+  border-radius: 7px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.15s;
+}
+
+.login-tab.ativo {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 14px;
+}
+
+.form-group label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.form-group input {
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem;
+  color: var(--text);
+  background: var(--surface2);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  outline: none;
+  width: 100%;
+  transition: border-color 0.15s;
+}
+
+.form-group input:focus { border-color: var(--accent); background: var(--surface); }
+
+.btn-primary {
+  width: 100%;
+  padding: 14px;
+  background: var(--charcoal);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-primary:hover { background: #2a2a2a; }
+.btn-primary:active { transform: scale(0.98); }
+.btn-primary.loading { opacity: 0.6; pointer-events: none; }
+
+.btn-accent {
+  background: var(--accent);
+  color: var(--charcoal);
+}
+
+.btn-accent:hover { background: var(--accent-dark); }
+
+.erro-msg {
+  background: var(--red-bg);
+  color: var(--red);
+  border-radius: 9px;
+  padding: 10px 14px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  margin-bottom: 14px;
+  display: none;
+}
+
+.erro-msg.visivel { display: block; }
+
+/* ==============================
+   TELA PRINCIPAL (HOME)
+   ============================== */
+#tela-home {
+  background: var(--bg);
+}
+
+/* HEADER */
+.app-header {
+  background: var(--charcoal);
+  padding: 16px 20px 20px;
+  color: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.header-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-logo .logo-mini {
+  width: 32px; height: 32px;
+  background: var(--accent);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+}
+
+.header-logo span {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.btn-sair {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: rgba(255,255,255,0.7);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.15s;
+}
+
+.btn-sair:hover { background: rgba(255,255,255,0.18); color: #fff; }
+
+.header-greeting {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.3;
+}
+
+.header-greeting small {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: rgba(255,255,255,0.55);
+  margin-top: 2px;
+}
+
+/* CONTEÚDO */
+.home-content {
+  flex: 1;
+  padding: 20px 16px 32px;
+}
+
+/* CARDS ESTATÍSTICAS */
+.stats-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.stat-mini {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+
+.stat-mini .num {
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: var(--text);
+  line-height: 1;
+}
+
+.stat-mini .lbl {
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-weight: 500;
+  margin-top: 5px;
+}
+
+/* SEÇÃO */
+.secao-titulo {
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+
+/* CARD OS */
+.os-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 12px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.os-card:active { transform: scale(0.99); }
+
+.os-card-header {
+  padding: 14px 16px 12px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.os-veiculo {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.os-veiculo small {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.os-num {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.os-problema {
+  padding: 0 16px 12px;
+  font-size: 0.82rem;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.os-footer {
+  padding: 10px 16px;
+  border-top: 1px solid var(--border);
+  background: var(--surface2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.os-valor {
+  font-size: 1rem;
+  font-weight: 900;
+  color: var(--text);
+}
+
+.os-data {
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+
+/* BADGES */
+.badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+.badge-orcamento  { background: var(--blue-bg);   color: var(--blue); }
+.badge-aprovado   { background: #EEF2FF;           color: #4F46E5; }
+.badge-andamento  { background: var(--amber-bg);   color: #B45309; }
+.badge-pronto     { background: var(--green-bg);   color: #059669; }
+.badge-entregue   { background: var(--surface2);   color: var(--muted); border: 1px solid var(--border); }
+
+/* BANNER AGUARDANDO APROVAÇÃO */
+.banner-aprovacao {
+  background: linear-gradient(135deg, #F5C400 0%, #FFD740 100%);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(245,196,0,0.3);
+  transition: transform 0.15s;
+}
+
+.banner-aprovacao:active { transform: scale(0.99); }
+
+.banner-aprovacao .banner-icon { font-size: 1.8rem; flex-shrink: 0; }
+
+.banner-aprovacao .banner-text strong {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--charcoal);
+}
+
+.banner-aprovacao .banner-text span {
+  font-size: 0.75rem;
+  color: rgba(26,26,26,0.7);
+}
+
+.banner-aprovacao .banner-arrow {
+  margin-left: auto;
+  font-size: 1.2rem;
+  color: var(--charcoal);
+  flex-shrink: 0;
+}
+
+/* EMPTY STATE */
+.empty {
+  text-align: center;
+  padding: 48px 20px;
+  color: var(--muted);
+}
+
+.empty .empty-icon { font-size: 3rem; margin-bottom: 12px; }
+.empty h3 { font-size: 1rem; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+.empty p  { font-size: 0.82rem; }
+
+/* LOADING */
+.loading-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  gap: 14px;
+}
+
+.spinner {
+  width: 36px; height: 36px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ==============================
+   MODAL DETALHES OS
+   ============================== */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 500;
+  display: none;
+  align-items: flex-end;
+}
+
+.overlay.aberto { display: flex; }
+
+.modal-sheet {
+  background: var(--surface);
+  border-radius: 24px 24px 0 0;
+  width: 100%;
+  max-height: 92vh;
+  overflow-y: auto;
+  animation: sheetUp 0.25s ease;
+}
+
+@keyframes sheetUp {
+  from { transform: translateY(60px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+.modal-drag {
+  width: 40px; height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  margin: 12px auto 4px;
+}
+
+.modal-header {
+  padding: 4px 20px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-title {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.btn-fechar {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  font-size: 1rem;
+  color: var(--muted);
+}
+
+.modal-body { padding: 20px; }
+
+/* PROGRESSO STATUS */
+.status-progress {
+  display: flex;
+  align-items: center;
+  margin: 16px 0 24px;
+  gap: 0;
+}
+
+.sp-step {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  position: relative;
+}
+
+.sp-step::before {
+  content: '';
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  right: -50%;
+  height: 2px;
+  background: var(--border);
+}
+
+.sp-step:last-child::before { display: none; }
+
+.sp-dot {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: var(--surface2);
+  border: 2px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.6rem;
+  position: relative;
+  z-index: 1;
+  transition: all 0.2s;
+}
+
+.sp-step.feito .sp-dot   { background: var(--green); border-color: var(--green); color: #fff; font-size: 0.7rem; }
+.sp-step.atual .sp-dot   { background: var(--accent); border-color: var(--accent); }
+.sp-step.feito::before   { background: var(--green); }
+
+.sp-lbl {
+  font-size: 0.58rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.2;
+}
+
+.sp-step.feito .sp-lbl, .sp-step.atual .sp-lbl { color: var(--text); }
+
+/* INFO ROWS */
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.875rem;
+}
+
+.info-row:last-child { border-bottom: none; }
+.info-row .info-lbl { color: var(--muted); font-weight: 500; }
+.info-row .info-val { font-weight: 700; color: var(--text); text-align: right; }
+
+/* ITENS TABLE */
+.itens-lista { margin: 16px 0; }
+
+.item-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.item-row:last-child { border-bottom: none; }
+
+.item-tipo {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  flex-shrink: 0;
+}
+
+.tipo-servico { background: var(--blue-bg); color: var(--blue); }
+.tipo-peca    { background: var(--amber-bg); color: #B45309; }
+
+.item-desc { flex: 1; font-size: 0.82rem; color: var(--text); }
+.item-qtd  { font-size: 0.72rem; color: var(--muted); }
+.item-val  { font-size: 0.875rem; font-weight: 700; color: var(--text); white-space: nowrap; }
+
+/* TOTAL */
+.os-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--surface2);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin: 16px 0;
+}
+
+.os-total .total-lbl { font-size: 0.875rem; font-weight: 600; color: var(--muted); }
+.os-total .total-val { font-size: 1.4rem; font-weight: 900; color: var(--text); }
+
+/* BOTÃO APROVAÇÃO */
+.btn-aprovar {
+  width: 100%;
+  padding: 16px;
+  background: var(--accent);
+  color: var(--charcoal);
+  border: none;
+  border-radius: 14px;
+  font-size: 1rem;
+  font-weight: 800;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 20px rgba(245,196,0,0.4);
+  transition: all 0.15s;
+  margin-bottom: 10px;
+}
+
+.btn-aprovar:hover  { background: var(--accent-dark); transform: translateY(-1px); }
+.btn-aprovar:active { transform: scale(0.98); }
+.btn-aprovar.loading { opacity: 0.6; pointer-events: none; }
+
+.btn-recusar {
+  width: 100%;
+  padding: 13px;
+  background: none;
+  color: var(--red);
+  border: 1.5px solid var(--red);
+  border-radius: 14px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-recusar:hover { background: var(--red-bg); }
+
+/* AVISO APROVADO */
+.aprovado-badge {
+  background: var(--green-bg);
+  border: 1px solid var(--green);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.aprovado-badge .ab-icon { font-size: 1.5rem; }
+.aprovado-badge .ab-text strong { display: block; font-size: 0.875rem; font-weight: 800; color: #065F46; }
+.aprovado-badge .ab-text span   { font-size: 0.75rem; color: #059669; }
+
+/* TOAST */
+.toast-wrap {
+  position: fixed;
+  bottom: 24px;
+  left: 16px; right: 16px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.toast {
+  background: var(--charcoal);
+  color: #fff;
+  padding: 13px 18px;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: toastIn 0.25s ease;
+  pointer-events: all;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* MODAL CONFIRMAÇÃO */
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 600;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.confirm-overlay.aberto { display: flex; }
+
+.confirm-box {
+  background: var(--surface);
+  border-radius: 20px;
+  padding: 28px 24px;
+  width: 100%;
+  max-width: 360px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  animation: popIn 0.2s ease;
+}
+
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.confirm-icon { font-size: 3rem; margin-bottom: 12px; }
+.confirm-title { font-size: 1.1rem; font-weight: 800; color: var(--text); margin-bottom: 8px; }
+.confirm-text  { font-size: 0.85rem; color: var(--muted); margin-bottom: 24px; line-height: 1.5; }
+
+.confirm-btns { display: flex; flex-direction: column; gap: 10px; }
+
+/* CONFIGURAÇÃO URL */
+#tela-config {
+  background: var(--charcoal);
+  align-items: center;
+  justify-content: center;
+  padding: 24px 20px;
+  text-align: center;
+}
+
+.config-box {
+  background: var(--surface);
+  border-radius: 24px;
+  padding: 32px 24px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.config-box h2 { font-size: 1.1rem; font-weight: 800; margin-bottom: 8px; }
+.config-box p  { font-size: 0.82rem; color: var(--muted); margin-bottom: 20px; line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     TELA: CONFIGURAR URL (primeira vez)
+     ============================================================ -->
+<div class="tela" id="tela-config">
+  <div class="config-box">
+    <div style="font-size:2.5rem;margin-bottom:12px">⚙️</div>
+    <h2>Configuração inicial</h2>
+    <p>Cole abaixo a URL do seu Google Apps Script. Você vai precisar fazer isso apenas uma vez.</p>
+    <div class="form-group">
+      <label>URL do Apps Script</label>
+      <input type="url" id="input-script-url" placeholder="https://script.google.com/macros/s/...">
+    </div>
+    <button class="btn-primary" onclick="salvarUrl()">Salvar e continuar →</button>
+  </div>
+</div>
+
+<!-- ============================================================
+     TELA: LOGIN / CADASTRO DE SENHA
+     ============================================================ -->
+<div class="tela" id="tela-login">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="logo-icon">🔧</div>
+      <h1>Oficina do Léo</h1>
+      <p>Área do cliente</p>
+    </div>
+
+    <div class="login-tabs">
+      <button class="login-tab ativo" onclick="trocarAba('entrar')">Entrar</button>
+      <button class="login-tab" onclick="trocarAba('criar')">Criar senha</button>
+    </div>
+
+    <div id="erro-login" class="erro-msg"></div>
+
+    <!-- ABA ENTRAR -->
+    <div id="aba-entrar">
+      <div class="form-group">
+        <label>CPF</label>
+        <input type="text" id="login-cpf" placeholder="000.000.000-00" oninput="mascCPF(this)" inputmode="numeric">
+      </div>
+      <div class="form-group">
+        <label>Senha</label>
+        <input type="password" id="login-senha" placeholder="Digite sua senha" onkeydown="if(event.key==='Enter')fazerLogin()">
+      </div>
+      <button class="btn-primary" id="btn-login" onclick="fazerLogin()">
+        Entrar
+      </button>
+    </div>
+
+    <!-- ABA CRIAR SENHA -->
+    <div id="aba-criar" style="display:none">
+      <div class="form-group">
+        <label>Seu CPF</label>
+        <input type="text" id="criar-cpf" placeholder="000.000.000-00" oninput="mascCPF(this)" inputmode="numeric">
+      </div>
+      <div class="form-group">
+        <label>Nova senha</label>
+        <input type="password" id="criar-senha" placeholder="Mínimo 4 caracteres">
+      </div>
+      <div class="form-group">
+        <label>Confirmar senha</label>
+        <input type="password" id="criar-senha2" placeholder="Repita a senha" onkeydown="if(event.key==='Enter')criarSenha()">
+      </div>
+      <button class="btn-primary btn-accent" id="btn-criar" onclick="criarSenha()">
+        Criar senha e entrar
+      </button>
+      <p style="font-size:0.72rem;color:var(--muted);text-align:center;margin-top:12px;line-height:1.5">
+        Seu CPF precisa já estar cadastrado pelo mecânico
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     TELA: HOME (lista de OS)
+     ============================================================ -->
+<div class="tela" id="tela-home">
+
+  <header class="app-header">
+    <div class="header-top">
+      <div class="header-logo">
+        <div class="logo-mini">🔧</div>
+        <span>Oficina do Léo</span>
+      </div>
+      <button class="btn-sair" onclick="sair()">Sair</button>
+    </div>
+    <div class="header-greeting" id="header-nome">
+      Carregando...
+      <small id="header-sub">Área do cliente</small>
+    </div>
+  </header>
+
+  <div class="home-content">
+
+    <!-- STATS -->
+    <div class="stats-row" id="stats-row">
+      <div class="stat-mini">
+        <div class="num" id="stat-total">—</div>
+        <div class="lbl">Total gasto</div>
+      </div>
+      <div class="stat-mini">
+        <div class="num" id="stat-os">0</div>
+        <div class="lbl">Ordens de serviço</div>
+      </div>
+    </div>
+
+    <!-- CONTEÚDO DINÂMICO -->
+    <div id="home-conteudo">
+      <div class="loading-wrap">
+        <div class="spinner"></div>
+        <span style="font-size:0.82rem;color:var(--muted)">Carregando suas OS...</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: DETALHES DA OS
+     ============================================================ -->
+<div class="overlay" id="overlay-os" onclick="fecharModal()">
+  <div class="modal-sheet" onclick="event.stopPropagation()">
+    <div class="modal-drag"></div>
+    <div class="modal-header">
+      <div class="modal-title" id="modal-os-titulo">Ordem de Serviço</div>
+      <button class="btn-fechar" onclick="fecharModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-os-body">
+      <!-- conteúdo gerado via JS -->
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: CONFIRMAÇÃO APROVAÇÃO
+     ============================================================ -->
+<div class="confirm-overlay" id="overlay-confirm">
+  <div class="confirm-box">
+    <div class="confirm-icon">✅</div>
+    <div class="confirm-title">Aprovar serviço?</div>
+    <div class="confirm-text">
+      Ao aprovar, o mecânico será notificado e iniciará o serviço imediatamente.
+      <br><br>
+      <strong id="confirm-valor"></strong>
+    </div>
+    <div class="confirm-btns">
+      <button class="btn-aprovar" onclick="confirmarAprovacao()">✅ Sim, aprovar serviço</button>
+      <button class="btn-recusar" onclick="fecharConfirm()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+// ============================================================
+//  CONFIG
+// ============================================================
+const SCRIPT_URL_KEY = 'oficina_leo_script_url';
+const CLIENTE_KEY    = 'oficina_leo_cliente';
+let   SCRIPT_URL     = localStorage.getItem(SCRIPT_URL_KEY) || 'https://script.google.com/macros/s/AKfycbxNIi6bd2yjEi5zoNzUIZwi-ku_Dkdi3zEQxVOlF69hxwCPP3tH4zld1CCZdfI0869O/exec';
+let   clienteLogado  = null;
+let   ordens         = [];
+let   osAtual        = null;
+let   osParaAprovar  = null;
+
+// ============================================================
+//  INIT
+// ============================================================
+window.addEventListener('DOMContentLoaded', function() {
+  if (!SCRIPT_URL) {
+    mostrarTela('config');
+    return;
+  }
+  const salvo = localStorage.getItem(CLIENTE_KEY);
+  if (salvo) {
+    clienteLogado = JSON.parse(salvo);
+    mostrarTela('home');
+    carregarOrdens();
+  } else {
+    mostrarTela('login');
+  }
+});
+
+function mostrarTela(nome) {
+  document.querySelectorAll('.tela').forEach(t => t.classList.remove('ativa'));
+  document.getElementById('tela-' + nome).classList.add('ativa');
+}
+
+// ============================================================
+//  CONFIGURAÇÃO URL
+// ============================================================
+function salvarUrl() {
+  const url = document.getElementById('input-script-url').value.trim();
+  if (!url.startsWith('https://script.google.com')) {
+    toast('URL inválida. Use a URL do Apps Script', '⚠️');
+    return;
+  }
+  localStorage.setItem(SCRIPT_URL_KEY, url);
+  SCRIPT_URL = url;
+  mostrarTela('login');
+}
+
+// ============================================================
+//  ABAS LOGIN
+// ============================================================
+function trocarAba(aba) {
+  document.getElementById('aba-entrar').style.display = aba === 'entrar' ? 'block' : 'none';
+  document.getElementById('aba-criar').style.display  = aba === 'criar'  ? 'block' : 'none';
+  document.querySelectorAll('.login-tab').forEach((t, i) => {
+    t.classList.toggle('ativo', (i === 0 && aba === 'entrar') || (i === 1 && aba === 'criar'));
+  });
+  esconderErro();
+}
+
+function mostrarErro(msg) {
+  const el = document.getElementById('erro-login');
+  el.textContent = msg;
+  el.classList.add('visivel');
+}
+
+function esconderErro() {
+  document.getElementById('erro-login').classList.remove('visivel');
+}
+
+// ============================================================
+//  LOGIN
+// ============================================================
+async function fazerLogin() {
+  const cpf   = document.getElementById('login-cpf').value.trim();
+  const senha = document.getElementById('login-senha').value;
+  if (!cpf || !senha) { mostrarErro('Preencha CPF e senha'); return; }
+
+  const btn = document.getElementById('btn-login');
+  btn.classList.add('loading');
+  btn.textContent = 'Entrando...';
+  esconderErro();
+
+  try {
+    const res = await api({ acao: 'loginCliente', cpf, senha });
+    if (res.erro) { mostrarErro(res.erro); return; }
+
+    clienteLogado = res.cliente;
+    localStorage.setItem(CLIENTE_KEY, JSON.stringify(clienteLogado));
+    mostrarTela('home');
+    carregarOrdens();
+
+  } catch(e) {
+    mostrarErro('Erro de conexão. Verifique a URL do Apps Script.');
+  } finally {
+    btn.classList.remove('loading');
+    btn.textContent = 'Entrar';
+  }
+}
+
+// ============================================================
+//  CRIAR SENHA
+// ============================================================
+async function criarSenha() {
+  const cpf    = document.getElementById('criar-cpf').value.trim();
+  const senha  = document.getElementById('criar-senha').value;
+  const senha2 = document.getElementById('criar-senha2').value;
+
+  if (!cpf)   { mostrarErro('Informe seu CPF'); return; }
+  if (senha.length < 4) { mostrarErro('Senha deve ter pelo menos 4 caracteres'); return; }
+  if (senha !== senha2) { mostrarErro('As senhas não coincidem'); return; }
+
+  const btn = document.getElementById('btn-criar');
+  btn.classList.add('loading');
+  btn.textContent = 'Criando...';
+  esconderErro();
+
+  try {
+    const res = await api({ acao: 'criarSenhaCliente', cpf, senha });
+    if (res.erro) { mostrarErro(res.erro); return; }
+
+    toast('Senha criada! Faça o login.', '✅');
+    trocarAba('entrar');
+    document.getElementById('login-cpf').value = cpf;
+
+  } catch(e) {
+    mostrarErro('Erro de conexão. Verifique a URL do Apps Script.');
+  } finally {
+    btn.classList.remove('loading');
+    btn.textContent = 'Criar senha e entrar';
+  }
+}
+
+// ============================================================
+//  HOME
+// ============================================================
+function renderHome() {
+  // Header
+  document.getElementById('header-nome').childNodes[0].nodeValue = 'Olá, ' + clienteLogado.nome.split(' ')[0] + ' 👋';
+  document.getElementById('header-sub').textContent = clienteLogado.cpf;
+
+  // Stats
+  const totalGasto = ordens
+    .filter(o => o.status === 'Entregue' || o.status === 'Pronto')
+    .reduce((s, o) => s + parseFloat(o.total || 0), 0);
+
+  document.getElementById('stat-total').textContent = 'R$' + totalGasto.toFixed(0);
+  document.getElementById('stat-os').textContent    = ordens.length;
+
+  // Conteúdo
+  const conteudo = document.getElementById('home-conteudo');
+
+  if (!ordens.length) {
+    conteudo.innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">📋</div>
+        <h3>Nenhuma OS ainda</h3>
+        <p>Quando o mecânico abrir uma ordem de serviço para você, ela aparecerá aqui.</p>
+      </div>`;
+    return;
+  }
+
+  // OS pendentes de aprovação
+  const pendentes = ordens.filter(o => o.status === 'Orçamento');
+
+  let html = '';
+
+  if (pendentes.length) {
+    html += `<div>`;
+    pendentes.forEach(os => {
+      html += `
+        <div class="banner-aprovacao" onclick="abrirOS('${os.id}')">
+          <div class="banner-icon">📄</div>
+          <div class="banner-text">
+            <strong>Orçamento aguardando sua aprovação</strong>
+            <span>${os.veiculoModelo} · ${fmt(os.total)}</span>
+          </div>
+          <div class="banner-arrow">→</div>
+        </div>`;
+    });
+    html += `</div>`;
+  }
+
+  // Todas as OS
+  html += `<div class="secao-titulo">Histórico de atendimentos</div>`;
+
+  ordens.sort((a, b) => new Date(b.criadoEm) - new Date(a.criadoEm)).forEach(os => {
+    html += `
+      <div class="os-card" onclick="abrirOS('${os.id}')">
+        <div class="os-card-header">
+          <div class="os-veiculo">
+            ${os.veiculoModelo || 'Veículo'}
+            <small>Placa: ${os.veiculoPlaca || '—'}</small>
+          </div>
+          <div>
+            <div class="os-num">#${String(os.id).slice(-6)}</div>
+            <div style="margin-top:5px">${badgeStatus(os.status)}</div>
+          </div>
+        </div>
+        <div class="os-problema">${os.problema || 'Sem descrição'}</div>
+        <div class="os-footer">
+          <div class="os-valor">${fmt(os.total)}</div>
+          <div class="os-data">${fmtData(os.criadoEm)}</div>
+        </div>
+      </div>`;
+  });
+
+  conteudo.innerHTML = html;
+}
+
+// ============================================================
+//  CARREGAR ORDENS
+// ============================================================
+async function carregarOrdens() {
+  document.getElementById('home-conteudo').innerHTML = `
+    <div class="loading-wrap">
+      <div class="spinner"></div>
+      <span style="font-size:0.82rem;color:var(--muted)">Carregando suas OS...</span>
+    </div>`;
+
+  try {
+    const res = await api({ acao: 'ordensDoCliente', cpf: clienteLogado.cpf });
+    if (res.erro) { toast(res.erro, '⚠️'); return; }
+    ordens = res.ordens || [];
+    renderHome();
+  } catch(e) {
+    toast('Erro ao carregar ordens', '⚠️');
+    document.getElementById('home-conteudo').innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">⚠️</div>
+        <h3>Erro de conexão</h3>
+        <p>Não foi possível carregar. Verifique sua internet.</p>
+        <button class="btn-primary" style="max-width:200px;margin:16px auto 0" onclick="carregarOrdens()">Tentar novamente</button>
+      </div>`;
+  }
+}
+
+// ============================================================
+//  MODAL OS
+// ============================================================
+function abrirOS(id) {
+  osAtual = ordens.find(o => String(o.id) === String(id));
+  if (!osAtual) return;
+
+  document.getElementById('modal-os-titulo').textContent = 'OS #' + String(osAtual.id).slice(-6);
+  document.getElementById('modal-os-body').innerHTML = renderOSBody(osAtual);
+  document.getElementById('overlay-os').classList.add('aberto');
+}
+
+function fecharModal() {
+  document.getElementById('overlay-os').classList.remove('aberto');
+  osAtual = null;
+}
+
+function renderOSBody(os) {
+  const steps = ['Orçamento','Em andamento','Pronto','Entregue'];
+  const stepIdx = steps.indexOf(os.status);
+
+  // Progresso
+  let progressHtml = '<div class="status-progress">';
+  steps.forEach((s, i) => {
+    const cls = i < stepIdx ? 'feito' : (i === stepIdx ? 'atual' : '');
+    const dot = i < stepIdx ? '✓' : (i === stepIdx ? '●' : '');
+    progressHtml += `
+      <div class="sp-step ${cls}">
+        <div class="sp-dot">${dot}</div>
+        <div class="sp-lbl">${s}</div>
+      </div>`;
+  });
+  progressHtml += '</div>';
+
+  // Itens
+  let itensHtml = '';
+  if (os.itens && os.itens.length) {
+    itensHtml = '<div class="secao-titulo" style="margin-top:16px">Serviços e peças</div><div class="itens-lista">';
+    os.itens.forEach(item => {
+      const tipo = item.tipo === 'servico' ? 'Serviço' : 'Peça';
+      const cls  = item.tipo === 'servico' ? 'tipo-servico' : 'tipo-peca';
+      itensHtml += `
+        <div class="item-row">
+          <span class="item-tipo ${cls}">${tipo}</span>
+          <span class="item-desc">${item.desc}</span>
+          <span class="item-qtd">x${item.qtd}</span>
+          <span class="item-val">${fmt(item.valorTotal)}</span>
+        </div>`;
+    });
+    itensHtml += '</div>';
+  }
+
+  // Botão ou badge de aprovação
+  let aprovacaoHtml = '';
+  if (os.status === 'Orçamento') {
+    aprovacaoHtml = `
+      <div style="margin-top:20px">
+        <button class="btn-aprovar" onclick="pedirConfirmacao('${os.id}')">
+          ✅ Aprovar este orçamento
+        </button>
+        <p style="font-size:0.72rem;color:var(--muted);text-align:center;margin-top:8px">
+          Ao aprovar, o mecânico iniciará o serviço imediatamente
+        </p>
+      </div>`;
+  } else if (os.aprovadoEm) {
+    aprovacaoHtml = `
+      <div class="aprovado-badge" style="margin-top:16px">
+        <div class="ab-icon">✅</div>
+        <div class="ab-text">
+          <strong>Serviço aprovado</strong>
+          <span>${fmtData(os.aprovadoEm)}</span>
+        </div>
+      </div>`;
+  }
+
+  // Observações
+  const obsHtml = os.obs ? `
+    <div class="secao-titulo" style="margin-top:16px">Observações do mecânico</div>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:0.82rem;color:var(--text);line-height:1.5">
+      ${os.obs}
+    </div>` : '';
+
+  return `
+    ${progressHtml}
+
+    <div class="secao-titulo">Informações</div>
+    <div class="info-row">
+      <span class="info-lbl">Veículo</span>
+      <span class="info-val">${os.veiculoModelo || '—'}</span>
+    </div>
+    <div class="info-row">
+      <span class="info-lbl">Placa</span>
+      <span class="info-val">${os.veiculoPlaca || '—'}</span>
+    </div>
+    <div class="info-row">
+      <span class="info-lbl">Problema relatado</span>
+      <span class="info-val" style="max-width:60%;text-align:right">${os.problema || '—'}</span>
+    </div>
+    <div class="info-row">
+      <span class="info-lbl">Abertura</span>
+      <span class="info-val">${fmtData(os.criadoEm)}</span>
+    </div>
+
+    ${itensHtml}
+
+    <div class="os-total">
+      <span class="total-lbl">Total</span>
+      <span class="total-val">${fmt(os.total)}</span>
+    </div>
+
+    ${obsHtml}
+    ${aprovacaoHtml}
+  `;
+}
+
+// ============================================================
+//  APROVAÇÃO
+// ============================================================
+function pedirConfirmacao(osId) {
+  osParaAprovar = osId;
+  const os = ordens.find(o => String(o.id) === String(osId));
+  document.getElementById('confirm-valor').textContent = 'Valor: ' + fmt(os?.total || 0);
+  document.getElementById('overlay-confirm').classList.add('aberto');
+}
+
+function fecharConfirm() {
+  document.getElementById('overlay-confirm').classList.remove('aberto');
+  osParaAprovar = null;
+}
+
+async function confirmarAprovacao() {
+  if (!osParaAprovar) return;
+
+  const btn = document.querySelector('#overlay-confirm .btn-aprovar');
+  btn.classList.add('loading');
+  btn.textContent = 'Aprovando...';
+
+  try {
+    const res = await api({
+      acao: 'aprovarOrcamento',
+      osId: osParaAprovar,
+      cpf: clienteLogado.cpf
+    });
+
+    if (res.erro) { toast(res.erro, '⚠️'); return; }
+
+    // Atualizar local
+    const os = ordens.find(o => String(o.id) === String(osParaAprovar));
+    if (os) {
+      os.status = 'Em andamento';
+      os.aprovadoEm = new Date().toISOString();
+    }
+
+    fecharConfirm();
+    fecharModal();
+    renderHome();
+    toast('Orçamento aprovado! O mecânico já foi notificado. 🎉', '✅');
+
+  } catch(e) {
+    toast('Erro ao aprovar. Tente novamente.', '⚠️');
+  } finally {
+    btn.classList.remove('loading');
+    btn.textContent = '✅ Sim, aprovar serviço';
+  }
+}
+
+// ============================================================
+//  SAIR
+// ============================================================
+function sair() {
+  localStorage.removeItem(CLIENTE_KEY);
+  clienteLogado = null;
+  ordens = [];
+  mostrarTela('login');
+  // limpar campos
+  ['login-cpf','login-senha'].forEach(id => document.getElementById(id).value = '');
+}
+
+// ============================================================
+//  API
+// ============================================================
+async function api(dados) {
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(dados),
+      redirect: 'follow'
+    });
+    return await res.json();
+  } catch(e) {
+    console.error('[api] Erro:', e);
+    return { erro: e.toString() };
+  }
+}
+
+// ============================================================
+//  HELPERS
+// ============================================================
+function fmt(v) {
+  return 'R$ ' + parseFloat(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function fmtData(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+function badgeStatus(s) {
+  const map = {
+    'Orçamento':   'badge-orcamento',
+    'Aprovado':    'badge-aprovado',
+    'Em andamento':'badge-andamento',
+    'Pronto':      'badge-pronto',
+    'Entregue':    'badge-entregue',
+  };
+  return `<span class="badge ${map[s] || 'badge-entregue'}">${s}</span>`;
+}
+
+function mascCPF(el) {
+  let v = el.value.replace(/\D/g,'').slice(0,11);
+  v = v.replace(/(\d{3})(\d)/,'$1.$2')
+       .replace(/(\d{3})(\d)/,'$1.$2')
+       .replace(/(\d{3})(\d{1,2})$/,'$1-$2');
+  el.value = v;
+}
+
+function toast(msg, icon = '✅') {
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.innerHTML = `<span>${icon}</span> ${msg}`;
+  document.getElementById('toastWrap').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+</script>
+</body>
+</html>
