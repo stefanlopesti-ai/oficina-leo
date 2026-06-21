@@ -957,7 +957,7 @@ let   SCRIPT_URL     = localStorage.getItem(SCRIPT_URL_KEY) || 'https://script.g
 // 🔧 TROQUE pelo mesmo OFICINA_ID configurado no oficina.html desta oficina.
 // 🔧 Pode vir pela URL (?oficinaId=OFxxxx) — assim você hospeda este arquivo
 // uma única vez e cada oficina-cliente usa o link com o ID dela.
-const OFICINA_ID = new URLSearchParams(location.search).get('oficinaId') || 'OF_TROQUE_AQUI';
+const OFICINA_ID = new URLSearchParams(location.search).get('oficinaId') || 'OFLEO';
 
 let   clienteLogado  = null;
 let   ordens         = [];
