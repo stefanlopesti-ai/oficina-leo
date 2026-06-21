@@ -1944,9 +1944,132 @@ mark {
 <body data-theme="light">
 
 <!-- ============================================================
+     AUTH GATE — login do mecânico / painel ADM master
+     Fica por cima de tudo até autenticar. Invisível pro mecânico:
+     o modo master só aparece com ?master=1 na URL.
+     ============================================================ -->
+<div id="authGate" style="position:fixed;inset:0;z-index:99999;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px;">
+  <div style="width:100%;max-width:380px;background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:32px 28px;">
+
+    <!-- LOGIN MECÂNICO -->
+    <div id="loginMecanicoBox">
+      <div style="text-align:center;margin-bottom:24px;">
+        <div style="font-size:40px;line-height:1">🔧</div>
+        <div style="font-weight:800;font-size:20px;margin-top:6px;" id="loginOficinaNome">Painel do Mecânico</div>
+        <div style="color:var(--text-muted);font-size:13px;">Entre com seu usuário e senha</div>
+      </div>
+      <div class="form-group" style="margin-bottom:14px;">
+        <label>Usuário</label>
+        <input type="text" id="lm-usuario" placeholder="seu usuário" autocomplete="username">
+      </div>
+      <div class="form-group" style="margin-bottom:18px;">
+        <label>Senha</label>
+        <input type="password" id="lm-senha" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')fazerLoginMecanico()">
+      </div>
+      <button class="btn btn-accent" style="width:100%;justify-content:center;" onclick="fazerLoginMecanico()">Entrar</button>
+      <div id="lm-erro" style="color:var(--red);font-size:13px;margin-top:12px;text-align:center;display:none;"></div>
+    </div>
+
+    <!-- LOGIN ADM MASTER (só renderiza com ?master=1 na URL) -->
+    <div id="loginAdminBox" style="display:none;">
+      <div style="text-align:center;margin-bottom:24px;">
+        <div style="font-size:40px;line-height:1">🛡️</div>
+        <div style="font-weight:800;font-size:20px;margin-top:6px;">Painel Master</div>
+        <div style="color:var(--text-muted);font-size:13px;">Acesso restrito ao administrador</div>
+      </div>
+      <div class="form-group" style="margin-bottom:14px;">
+        <label>Usuário admin</label>
+        <input type="text" id="la-usuario" autocomplete="username">
+      </div>
+      <div class="form-group" style="margin-bottom:18px;">
+        <label>Senha</label>
+        <input type="password" id="la-senha" autocomplete="current-password" onkeydown="if(event.key==='Enter')fazerLoginAdmin()">
+      </div>
+      <button class="btn btn-accent" style="width:100%;justify-content:center;" onclick="fazerLoginAdmin()">Entrar no painel master</button>
+      <div id="la-erro" style="color:var(--red);font-size:13px;margin-top:12px;text-align:center;display:none;"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============================================================
+     PAINEL ADM MASTER — gestão de oficinas-cliente (planos/limites)
+     Só é exibido depois do login admin, em modo ?master=1
+     ============================================================ -->
+<div id="painelMaster" style="display:none;max-width:1000px;margin:0 auto;padding:24px 16px 60px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+    <div>
+      <div style="font-weight:800;font-size:22px;">🛡️ Painel Master</div>
+      <div style="color:var(--text-muted);font-size:13px;">Gerencie as oficinas-cliente, planos e limites</div>
+    </div>
+    <button class="btn btn-outline" onclick="logoutAdmin()">Sair</button>
+  </div>
+
+  <div class="card" style="margin-bottom:20px;">
+    <div class="card-head"><div class="card-head-title">+ Nova oficina</div></div>
+    <div class="form-grid">
+      <div class="form-group span2">
+        <label>Nome da oficina</label>
+        <input type="text" id="adm-novo-nome" placeholder="Ex.: Oficina do João">
+      </div>
+      <div class="form-group">
+        <label>Plano</label>
+        <select id="adm-novo-plano" onchange="aoMudarPlanoNovo()">
+          <option value="gratuito">Gratuito (10 clientes)</option>
+          <option value="plano50">Plano 50 (50 clientes) — R$ 79,90/mês</option>
+          <option value="plano100">Plano 100 (100 clientes) — R$ 149,90/mês</option>
+          <option value="ilimitado">Ilimitado — R$ 199,90/mês</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Limite de clientes</label>
+        <input type="number" id="adm-novo-limiteClientes" value="10">
+      </div>
+      <div class="form-group">
+        <label>Limite de mecânicos</label>
+        <input type="number" id="adm-novo-limiteMec" value="1">
+      </div>
+      <div class="form-group">
+        <label>Validade (opcional)</label>
+        <input type="date" id="adm-novo-validade">
+      </div>
+      <div class="form-group span2" style="border-top:1px solid var(--border);margin-top:6px;padding-top:14px;">
+        <label style="font-weight:700;">Primeiro login do mecânico (opcional, mas recomendado)</label>
+      </div>
+      <div class="form-group">
+        <label>Nome do mecânico</label>
+        <input type="text" id="adm-mec-nome" placeholder="Ex.: Léo">
+      </div>
+      <div class="form-group">
+        <label>Usuário</label>
+        <input type="text" id="adm-mec-usuario" placeholder="usuário de login">
+      </div>
+      <div class="form-group">
+        <label>Senha</label>
+        <input type="text" id="adm-mec-senha" placeholder="senha (vai te mostrar isso depois pra avisar o cliente)">
+      </div>
+    </div>
+    <div style="margin-top:14px;">
+      <button class="btn btn-primary" onclick="criarOficinaAdmin()">Criar oficina</button>
+    </div>
+    <div id="adm-novo-resultado" style="margin-top:14px;font-size:13px;"></div>
+  </div>
+
+  <div class="card" style="margin-bottom:20px;">
+    <div class="card-head"><div class="card-head-title">📲 Solicitações de upgrade pendentes</div></div>
+    <div id="adm-lista-solicitacoes"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><div class="card-head-title">Oficinas cadastradas</div></div>
+    <div id="adm-lista-oficinas" style="overflow-x:auto;"></div>
+  </div>
+</div>
+
+<!-- ============================================================
      SIDEBAR
      ============================================================ -->
-<div class="app-shell">
+<div class="app-shell" id="appShell" style="display:none;">
 <nav class="sidebar" id="sidebar">
   <div class="sidebar-logo">
     <div class="logo-icon">🔧</div>
@@ -1987,12 +2110,20 @@ mark {
     </button>
 
     <span class="nav-group-label">Sistema</span>
+    <button class="nav-item" onclick="navigate('plano')">
+      <span class="nav-icon">💎</span> Plano
+    </button>
+    <button class="nav-item" onclick="navigate('equipe')">
+      <span class="nav-icon">🧑‍🔧</span> Equipe
+    </button>
     <button class="nav-item" onclick="navigate('config')">
       <span class="nav-icon">⚙️</span> Configurações
     </button>
   </div>
 
   <div class="sidebar-footer">
+    <div id="sidebarMecanicoNome" style="font-weight:600;color:var(--text);margin-bottom:4px;"></div>
+    <button class="btn btn-outline" style="width:100%;justify-content:center;padding:6px;font-size:13px;margin-bottom:8px;" onclick="logoutMecanico()">Sair</button>
     Desenvolvido por Stefan Lopes de Aquino
   </div>
 </nav>
@@ -2116,11 +2247,12 @@ mark {
 
   <!-- ===== CLIENTES ===== -->
   <div class="page-content" id="page-clientes">
+    <div id="avisoLimitePlano"></div>
     <div class="page-toolbar">
       <div class="search-box">
         🔍 <input type="text" placeholder="Buscar por nome, telefone ou CPF..." oninput="filtrarClientes(this.value)">
       </div>
-      <button class="btn btn-primary" onclick="openNovoCliente()">+ Novo cliente</button>
+      <button class="btn btn-primary" id="btnNovoCliente" onclick="openNovoCliente()">+ Novo cliente</button>
     </div>
     <div class="table-wrap">
       <table>
@@ -2289,6 +2421,50 @@ mark {
   </div>
 
   <!-- ===== CONFIGURAÇÕES ===== -->
+  <div class="page-content" id="page-plano">
+    <div class="card" style="margin-bottom:20px;">
+      <div class="card-head"><div class="card-head-title">Seu plano atual</div></div>
+      <div id="planoAtualResumo">Carregando...</div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="card-head-title">Fazer upgrade</div></div>
+      <div style="color:var(--text-muted);font-size:13px;margin-bottom:14px;">
+        Escolha o plano desejado. Você vai pro WhatsApp pra combinar o pagamento via Pix —
+        depois que o pagamento for confirmado, seu plano é liberado.
+      </div>
+      <div id="planosDisponiveis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;"></div>
+    </div>
+  </div>
+
+  <div class="page-content" id="page-equipe">
+    <div class="card" style="margin-bottom:20px;">
+      <div class="card-head"><div class="card-head-title">+ Adicionar mecânico</div></div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Nome</label>
+          <input type="text" id="eq-nome" placeholder="Nome do mecânico">
+        </div>
+        <div class="form-group">
+          <label>Usuário</label>
+          <input type="text" id="eq-usuario" placeholder="usuário de login">
+        </div>
+        <div class="form-group">
+          <label>Senha</label>
+          <input type="password" id="eq-senha" placeholder="senha">
+        </div>
+      </div>
+      <div style="margin-top:14px;">
+        <button class="btn btn-primary" onclick="adicionarMecanico()">Adicionar mecânico</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="card-head-title">Equipe da oficina</div></div>
+      <div id="listaEquipe"></div>
+    </div>
+  </div>
+
   <div class="page-content" id="page-config">
     <div class="config-section">
       <div class="config-section-title">Aparência</div>
@@ -2690,8 +2866,28 @@ mark {
 /* -------- GOOGLE SHEETS SYNC -------- */
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxNIi6bd2yjEi5zoNzUIZwi-ku_Dkdi3zEQxVOlF69hxwCPP3tH4zld1CCZdfI0869O/exec';
 
+// 🔧 TROQUE pelo ID que o painel master te der ao criar esta oficina.
+// Cada cópia deste arquivo entregue a um cliente deve ter o SEU PRÓPRIO OFICINA_ID.
+const OFICINA_ID = 'OF_TROQUE_AQUI';
+
+// 🔧 TROQUE pelo seu número de WhatsApp com DDI+DDD, só números (ex.: 5511987654321)
+const WHATSAPP_SUPORTE = '5521996656054';
+
+// Catálogo de planos (espelha o do backend, só pra exibir nome/preço bonitinho)
+const PLANOS_CATALOGO = {
+  gratuito:  { nome: 'Gratuito',  limiteClientes: 10,   preco: 0 },
+  plano50:   { nome: 'Plano 50',  limiteClientes: 50,   preco: 79.90 },
+  plano100:  { nome: 'Plano 100', limiteClientes: 100,  preco: 149.90 },
+  ilimitado: { nome: 'Ilimitado', limiteClientes: null, preco: 199.90 },
+};
+let infoOficinaAtual = null; // preenchido por carregarInfoOficina()
+
 async function apiNuvem(dados) {
   try {
+    // injeta automaticamente o oficinaId em toda chamada que não seja do painel master
+    if (dados.oficinaId === undefined && dados.acao !== 'loginAdmin' && dados.acao !== 'listarOficinas' && dados.acao !== 'criarOficina' && dados.acao !== 'editarOficina') {
+      dados.oficinaId = OFICINA_ID;
+    }
     const res = await fetch(SCRIPT_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
@@ -2722,6 +2918,7 @@ async function syncComNuvem() {
       renderOS();
       renderClientes();
       refreshDashboard && refreshDashboard();
+      carregarInfoOficina();
       toast('Sincronizado com a nuvem! ☁️');
     } else {
       toast('Erro no sync: ' + (res.erro || 'desconhecido'));
@@ -2736,6 +2933,7 @@ async function syncComNuvem() {
 async function enviarClienteNuvem(cliente) {
   const res = await apiNuvem({ acao: 'salvarCliente', dados: cliente });
   if (res.erro) toast('⚠️ Nuvem: ' + res.erro);
+  return res;
 }
 
 async function enviarOrdemNuvem(os) {
@@ -2746,6 +2944,346 @@ async function enviarOrdemNuvem(os) {
 async function enviarStatusNuvem(id, status, aprovadoPor) {
   const res = await apiNuvem({ acao: 'atualizarStatus', id, status, aprovadoPor });
   if (res.erro) toast('⚠️ Nuvem: ' + res.erro);
+}
+
+/* ============================================================
+   AUTENTICAÇÃO — login do mecânico e painel ADM master
+   ============================================================ */
+const MODO_MASTER = new URLSearchParams(location.search).get('master') === '1';
+
+let mecanicoLogado = JSON.parse(localStorage.getItem('oleo_mecanico') || 'null');
+let adminLogado    = JSON.parse(sessionStorage.getItem('oleo_admin')   || 'null'); // {usuario, senha} — só em memória da sessão
+
+function abrirApp() {
+  document.getElementById('authGate').style.display = 'none';
+  document.getElementById('appShell').style.display = '';
+  document.getElementById('painelMaster').style.display = 'none';
+  const nomeEl = document.getElementById('sidebarMecanicoNome');
+  if (nomeEl && mecanicoLogado) nomeEl.textContent = '👋 ' + (mecanicoLogado.nome || mecanicoLogado.usuario);
+  carregarInfoOficina();
+}
+
+async function fazerLoginMecanico() {
+  const usuario = document.getElementById('lm-usuario').value.trim();
+  const senha   = document.getElementById('lm-senha').value;
+  const erroEl  = document.getElementById('lm-erro');
+  erroEl.style.display = 'none';
+  if (!usuario || !senha) { erroEl.textContent = 'Preencha usuário e senha'; erroEl.style.display = 'block'; return; }
+
+  const res = await apiNuvem({ acao: 'loginMecanico', usuario, senha });
+  if (res.erro) { erroEl.textContent = res.erro; erroEl.style.display = 'block'; return; }
+
+  mecanicoLogado = res.mecanico;
+  localStorage.setItem('oleo_mecanico', JSON.stringify(mecanicoLogado));
+  abrirApp();
+}
+
+function logoutMecanico() {
+  localStorage.removeItem('oleo_mecanico');
+  location.reload();
+}
+
+/* ---- ADM MASTER ---- */
+function abrirPainelMaster() {
+  document.getElementById('authGate').style.display = 'none';
+  document.getElementById('appShell').style.display = 'none';
+  document.getElementById('painelMaster').style.display = '';
+  carregarOficinasAdmin();
+  carregarSolicitacoesAdmin();
+}
+
+async function fazerLoginAdmin() {
+  const usuario = document.getElementById('la-usuario').value.trim();
+  const senha   = document.getElementById('la-senha').value;
+  const erroEl  = document.getElementById('la-erro');
+  erroEl.style.display = 'none';
+  if (!usuario || !senha) { erroEl.textContent = 'Preencha usuário e senha'; erroEl.style.display = 'block'; return; }
+
+  const res = await apiNuvem({ acao: 'loginAdmin', usuario, senha });
+  if (res.erro) { erroEl.textContent = res.erro; erroEl.style.display = 'block'; return; }
+
+  adminLogado = { usuario, senha };
+  sessionStorage.setItem('oleo_admin', JSON.stringify(adminLogado));
+  abrirPainelMaster();
+}
+
+function logoutAdmin() {
+  sessionStorage.removeItem('oleo_admin');
+  location.reload();
+}
+
+function aoMudarPlanoNovo() {
+  const plano = document.getElementById('adm-novo-plano').value;
+  const limite = PLANOS_CATALOGO[plano]?.limiteClientes;
+  document.getElementById('adm-novo-limiteClientes').value = limite == null ? '' : limite;
+}
+
+async function carregarSolicitacoesAdmin() {
+  const cont = document.getElementById('adm-lista-solicitacoes');
+  const res = await apiNuvem({ acao: 'listarSolicitacoes', adminUser: adminLogado.usuario, adminSenha: adminLogado.senha });
+  if (res.erro) { cont.innerHTML = '<p style="color:var(--red);">' + res.erro + '</p>'; return; }
+
+  const pendentes = res.solicitacoes.filter(s => s.status === 'pendente');
+  if (!pendentes.length) { cont.innerHTML = '<p style="color:var(--text-muted);">Nenhuma solicitação pendente. ✅</p>'; return; }
+
+  cont.innerHTML = pendentes.map(s => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);gap:10px;flex-wrap:wrap;">
+      <div>
+        <b>${s.oficinaNome}</b> <code style="background:var(--surface2);padding:1px 5px;border-radius:4px;">${s.oficinaId}</code><br>
+        <span style="color:var(--text-muted);font-size:13px;">
+          quer ir de <b>${PLANOS_CATALOGO[s.planoAtual]?.nome || s.planoAtual}</b> pra <b>${PLANOS_CATALOGO[s.planoDesejado]?.nome || s.planoDesejado}</b>
+          ${s.solicitante ? ' — pedido por ' + s.solicitante : ''} em ${new Date(s.ts).toLocaleString('pt-BR')}
+        </span>
+      </div>
+      <button class="btn btn-outline" style="padding:4px 10px;font-size:13px;" onclick="marcarSolicitacaoAtendidaAdmin('${s.id}')">Marcar como atendida</button>
+    </div>
+  `).join('');
+}
+
+async function marcarSolicitacaoAtendidaAdmin(id) {
+  await apiNuvem({ acao: 'marcarSolicitacaoAtendida', adminUser: adminLogado.usuario, adminSenha: adminLogado.senha, id });
+  carregarSolicitacoesAdmin();
+  toast('Lembre-se de também atualizar o plano da oficina na tabela abaixo, se ainda não fez. ⬇️');
+}
+
+async function carregarOficinasAdmin() {
+  const cont = document.getElementById('adm-lista-oficinas');
+  cont.innerHTML = '<p style="color:var(--text-muted);">Carregando...</p>';
+  const res = await apiNuvem({ acao: 'listarOficinas', adminUser: adminLogado.usuario, adminSenha: adminLogado.senha });
+  if (res.erro) { cont.innerHTML = '<p style="color:var(--red);">' + res.erro + '</p>'; return; }
+
+  if (!res.oficinas.length) {
+    cont.innerHTML = '<p style="color:var(--text-muted);">Nenhuma oficina cadastrada ainda.</p>';
+    return;
+  }
+
+  const opcoesPlano = Object.entries(PLANOS_CATALOGO).map(([key,p]) => `<option value="${key}">${p.nome}</option>`).join('');
+
+  cont.innerHTML = `
+    <table style="width:100%;border-collapse:collapse;font-size:14px;">
+      <thead>
+        <tr style="text-align:left;border-bottom:1px solid var(--border);">
+          <th style="padding:8px;">OFICINA_ID</th><th style="padding:8px;">Nome</th>
+          <th style="padding:8px;">Plano</th><th style="padding:8px;">Limite clientes</th>
+          <th style="padding:8px;">Limite mecânicos</th><th style="padding:8px;">Status</th>
+          <th style="padding:8px;">Validade</th><th style="padding:8px;"></th>
+        </tr>
+      </thead>
+      <tbody>
+        ${res.oficinas.map(of => `
+          <tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:8px;"><code style="background:var(--surface2);padding:2px 6px;border-radius:4px;">${of.id}</code></td>
+            <td style="padding:8px;">${of.nome}</td>
+            <td style="padding:8px;">
+              <select id="of-plano-${of.id}" style="padding:4px;" onchange="aoMudarPlanoExistente('${of.id}')">
+                ${opcoesPlano}
+              </select>
+            </td>
+            <td style="padding:8px;"><input type="number" style="width:80px;padding:4px;" value="${of.limiteClientes ?? ''}" id="of-limCli-${of.id}" placeholder="ilimitado"></td>
+            <td style="padding:8px;"><input type="number" style="width:60px;padding:4px;" value="${of.limiteMecanicos}" id="of-limMec-${of.id}"></td>
+            <td style="padding:8px;">
+              <select id="of-status-${of.id}" style="padding:4px;">
+                <option value="ativo" ${of.status==='ativo'?'selected':''}>ativo</option>
+                <option value="inativo" ${of.status==='inativo'?'selected':''}>inativo</option>
+              </select>
+            </td>
+            <td style="padding:8px;"><input type="date" style="padding:4px;" value="${of.validade || ''}" id="of-validade-${of.id}"></td>
+            <td style="padding:8px;"><button class="btn btn-outline" style="padding:4px 10px;font-size:13px;" onclick="salvarOficinaAdmin('${of.id}')">Salvar</button></td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+
+  // seleciona o plano atual de cada oficina no <select>
+  res.oficinas.forEach(of => {
+    const sel = document.getElementById('of-plano-' + of.id);
+    if (sel) sel.value = of.plano;
+  });
+}
+
+function aoMudarPlanoExistente(id) {
+  const plano = document.getElementById('of-plano-' + id).value;
+  const limite = PLANOS_CATALOGO[plano]?.limiteClientes;
+  document.getElementById('of-limCli-' + id).value = limite == null ? '' : limite;
+}
+
+async function salvarOficinaAdmin(id) {
+  const limiteVal = document.getElementById('of-limCli-' + id).value;
+  const dados = {
+    plano: document.getElementById('of-plano-' + id).value,
+    limiteClientes: limiteVal === '' ? '' : Number(limiteVal),
+    limiteMecanicos: Number(document.getElementById('of-limMec-' + id).value),
+    status: document.getElementById('of-status-' + id).value,
+    validade: document.getElementById('of-validade-' + id).value
+  };
+  const res = await apiNuvem({ acao: 'editarOficina', adminUser: adminLogado.usuario, adminSenha: adminLogado.senha, id, dados });
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  toast('Oficina atualizada ✅');
+}
+
+async function criarOficinaAdmin() {
+  const limiteVal = document.getElementById('adm-novo-limiteClientes').value;
+  const dados = {
+    nome: document.getElementById('adm-novo-nome').value.trim(),
+    plano: document.getElementById('adm-novo-plano').value || 'gratuito',
+    limiteClientes: limiteVal === '' ? '' : Number(limiteVal),
+    limiteMecanicos: Number(document.getElementById('adm-novo-limiteMec').value) || 1,
+    validade: document.getElementById('adm-novo-validade').value,
+    mecanicoNome: document.getElementById('adm-mec-nome').value.trim(),
+    mecanicoUsuario: document.getElementById('adm-mec-usuario').value.trim(),
+    mecanicoSenha: document.getElementById('adm-mec-senha').value.trim()
+  };
+  const resultEl = document.getElementById('adm-novo-resultado');
+  if (!dados.nome) { resultEl.style.color = 'var(--red)'; resultEl.textContent = 'Informe o nome da oficina'; return; }
+
+  resultEl.style.color = 'var(--text-muted)'; resultEl.textContent = 'Criando planilha da oficina, aguarde...';
+  const res = await apiNuvem({ acao: 'criarOficina', adminUser: adminLogado.usuario, adminSenha: adminLogado.senha, dados });
+  if (res.erro) { resultEl.style.color = 'var(--red)'; resultEl.textContent = res.erro; return; }
+
+  resultEl.style.color = 'var(--green)';
+  resultEl.innerHTML = `✅ Oficina criada! <b>OFICINA_ID: ${res.id}</b><br>
+    Coloque esse ID na constante OFICINA_ID do oficina.html e do client.html que você vai entregar pra esse cliente.<br>
+    ${res.mecanicoCriado ? `Login do mecânico criado: <b>${res.mecanicoCriado}</b> / senha: <b>${dados.mecanicoSenha}</b> — avise o cliente.<br>` : '⚠️ Nenhum login de mecânico criado ainda — adicione um na aba Equipe depois de configurar o OFICINA_ID.<br>'}
+    <a href="${res.sheetUrl}" target="_blank">Abrir a planilha desta oficina →</a>`;
+  document.getElementById('adm-novo-nome').value = '';
+  document.getElementById('adm-mec-nome').value = '';
+  document.getElementById('adm-mec-usuario').value = '';
+  document.getElementById('adm-mec-senha').value = '';
+  carregarOficinasAdmin();
+}
+
+/* ---- PLANO / LIMITE DE CLIENTES ---- */
+async function carregarInfoOficina() {
+  const res = await apiNuvem({ acao: 'infoOficina' });
+  if (res.erro) return; // não bloqueia a tela por isso
+  infoOficinaAtual = res;
+  renderAvisoLimitePlano();
+}
+
+function renderAvisoLimitePlano() {
+  const cont = document.getElementById('avisoLimitePlano');
+  const btnNovo = document.getElementById('btnNovoCliente');
+  if (!cont || !infoOficinaAtual) return;
+
+  const limite = infoOficinaAtual.oficina.limiteClientes;
+  const total  = infoOficinaAtual.totalClientes;
+
+  if (limite == null || limite === '') { cont.innerHTML = ''; if (btnNovo) btnNovo.disabled = false; return; }
+
+  const restantes = Number(limite) - total;
+
+  if (restantes <= 0) {
+    cont.innerHTML = `
+      <div style="background:#fee2e2;border:1px solid #fca5a5;color:#991b1b;border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+        <span>🚫 Limite do plano <b>${infoOficinaAtual.oficina.plano}</b> atingido (${total}/${limite} clientes). Você não pode cadastrar novos clientes até fazer upgrade.</span>
+        <button class="btn btn-primary" style="white-space:nowrap;" onclick="navigate('plano')">Fazer upgrade</button>
+      </div>`;
+    if (btnNovo) btnNovo.disabled = true;
+  } else if (restantes <= 3) {
+    cont.innerHTML = `
+      <div style="background:#fef3c7;border:1px solid #fcd34d;color:#92400e;border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+        <span>⚠️ Faltam só ${restantes} vaga${restantes===1?'':'s'} no seu plano (${total}/${limite} clientes).</span>
+        <button class="btn btn-outline" style="white-space:nowrap;" onclick="navigate('plano')">Clique aqui para fazer upgrade</button>
+      </div>`;
+    if (btnNovo) btnNovo.disabled = false;
+  } else {
+    cont.innerHTML = '';
+    if (btnNovo) btnNovo.disabled = false;
+  }
+}
+
+async function carregarPlano() {
+  const res = await apiNuvem({ acao: 'infoOficina' });
+  const resumoEl = document.getElementById('planoAtualResumo');
+  const listaEl  = document.getElementById('planosDisponiveis');
+  if (res.erro) { resumoEl.innerHTML = '<p style="color:var(--red);">' + res.erro + '</p>'; return; }
+
+  infoOficinaAtual = res;
+  const planoAtualInfo = PLANOS_CATALOGO[res.oficina.plano] || { nome: res.oficina.plano, preco: null };
+  const limite = res.oficina.limiteClientes;
+  const total  = res.totalClientes;
+
+  resumoEl.innerHTML = `
+    <div style="font-size:18px;font-weight:800;margin-bottom:4px;">${planoAtualInfo.nome}</div>
+    <div style="color:var(--text-muted);font-size:14px;margin-bottom:10px;">
+      ${limite != null && limite !== '' ? `${total} de ${limite} clientes cadastrados` : `${total} clientes cadastrados (ilimitado)`}
+    </div>
+    ${limite != null && limite !== '' ? `
+      <div style="background:var(--surface2);border-radius:8px;height:10px;overflow:hidden;max-width:320px;">
+        <div style="height:100%;border-radius:8px;background:${total>=limite?'var(--red)':(total>=limite-3?'#f59e0b':'var(--green)')};width:${Math.min(100,(total/limite)*100)}%;"></div>
+      </div>` : ''}
+  `;
+
+  listaEl.innerHTML = Object.entries(PLANOS_CATALOGO).map(([key, p]) => `
+    <div class="card" style="${key===res.oficina.plano ? 'border:2px solid var(--accent);' : ''}padding:16px;">
+      <div style="font-weight:700;font-size:16px;">${p.nome}</div>
+      <div style="color:var(--text-muted);font-size:13px;margin-bottom:8px;">
+        ${p.limiteClientes == null ? 'Clientes ilimitados' : 'Até ' + p.limiteClientes + ' clientes'}
+      </div>
+      <div style="font-size:20px;font-weight:800;margin-bottom:12px;">
+        ${p.preco === 0 ? 'Grátis' : 'R$ ' + p.preco.toFixed(2).replace('.', ',') + '/mês'}
+      </div>
+      ${key === res.oficina.plano
+        ? '<span style="color:var(--green);font-size:13px;font-weight:600;">✓ Seu plano atual</span>'
+        : `<button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="solicitarUpgradePlano('${key}','${p.nome}')">Solicitar upgrade</button>`}
+    </div>
+  `).join('');
+}
+
+async function solicitarUpgradePlano(planoKey, planoNome) {
+  const solicitante = mecanicoLogado ? (mecanicoLogado.nome || mecanicoLogado.usuario) : '';
+  await apiNuvem({ acao: 'solicitarUpgrade', planoDesejado: planoKey, solicitante });
+
+  const msg = encodeURIComponent(
+    `Olá! Quero fazer upgrade da minha oficina "${infoOficinaAtual?.oficina?.nome || ''}" (OFICINA_ID: ${OFICINA_ID}) para o ${planoNome}. Vou enviar o comprovante do Pix por aqui.`
+  );
+  window.open(`https://wa.me/${WHATSAPP_SUPORTE}?text=${msg}`, '_blank');
+  toast('Solicitação registrada! Finalize o pedido no WhatsApp que abriu 📲');
+}
+
+
+async function carregarEquipe() {
+  const cont = document.getElementById('listaEquipe');
+  if (!cont) return;
+  cont.innerHTML = '<p style="color:var(--text-muted);">Carregando...</p>';
+  const res = await apiNuvem({ acao: 'listarMecanicos' });
+  if (res.erro) { cont.innerHTML = '<p style="color:var(--red);">' + res.erro + '</p>'; return; }
+
+  const restantes = (res.limite || 1) - res.mecanicos.length;
+  cont.innerHTML = `
+    <p style="color:var(--text-muted);font-size:13px;margin-bottom:12px;">
+      ${res.mecanicos.length} de ${res.limite} mecânicos do seu plano em uso.
+    </p>
+    ${res.mecanicos.map(m => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);">
+        <div><b>${m.nome || m.usuario}</b><br><span style="color:var(--text-muted);font-size:13px;">@${m.usuario}</span></div>
+        <button class="btn btn-outline" style="padding:4px 10px;font-size:13px;" onclick="removerMecanico('${m.id}')">Remover</button>
+      </div>
+    `).join('')}
+    ${restantes > 0 ? '' : '<p style="color:var(--amber);font-size:13px;margin-top:10px;">Limite de mecânicos do plano atingido.</p>'}
+  `;
+}
+
+async function adicionarMecanico() {
+  const usuario = document.getElementById('eq-usuario').value.trim();
+  const senha   = document.getElementById('eq-senha').value;
+  const nome    = document.getElementById('eq-nome').value.trim();
+  if (!usuario || !senha) { toast('Preencha usuário e senha'); return; }
+
+  const res = await apiNuvem({ acao: 'criarMecanico', dados: { usuario, senha, nome } });
+  if (res.erro) { toast('⚠️ ' + res.erro); return; }
+  toast('Mecânico adicionado ✅');
+  document.getElementById('eq-usuario').value = '';
+  document.getElementById('eq-senha').value = '';
+  document.getElementById('eq-nome').value = '';
+  carregarEquipe();
+}
+
+async function removerMecanico(id) {
+  if (!confirm('Remover o acesso deste mecânico?')) return;
+  await apiNuvem({ acao: 'deletarMecanico', id });
+  carregarEquipe();
 }
 
 /* -------- STATE -------- */
@@ -2765,6 +3303,8 @@ const pageTitles = {
   veiculos:   'Veículos',
   historico:  'Histórico',
   financeiro: 'Financeiro',
+  plano:      'Plano',
+  equipe:     'Equipe',
   config:     'Configurações',
 };
 
@@ -2781,10 +3321,12 @@ function navigate(page) {
   const fab = document.getElementById('fabHome');
   if (fab) fab.style.display = page === 'dashboard' ? 'none' : 'flex';
   if (page === 'dashboard')  refreshDashboard();
-  if (page === 'clientes')   renderClientes();
+  if (page === 'clientes')   { renderClientes(); carregarInfoOficina(); }
   if (page === 'os')         renderOS();
   if (page === 'veiculos')   renderVeiculos();
   if (page === 'financeiro') renderFinanceiro();
+  if (page === 'equipe')     carregarEquipe();
+  if (page === 'plano')      carregarPlano();
 }
 
 /* -------- TEMA -------- */
@@ -3003,13 +3545,14 @@ document.addEventListener('click', function(e) {
   if (wrap && !wrap.contains(e.target)) fecharCombobox();
 });
 
-function salvarCliente() {
+async function salvarCliente() {
   const nome = document.getElementById('cli-nome').value.trim();
   const tel  = document.getElementById('cli-tel').value.trim();
   if (!nome || !tel) { toast('Preencha nome e telefone', '⚠️'); return; }
 
+  const ehNovo = editingClienteIdx === null;
   const cliente = {
-    id:       editingClienteIdx !== null ? clientes[editingClienteIdx].id : Date.now(),
+    id:       ehNovo ? Date.now() : clientes[editingClienteIdx].id,
     nome,
     cpf:      document.getElementById('cli-cpf').value,
     nasc:     document.getElementById('cli-nasc').value,
@@ -3035,19 +3578,24 @@ function salvarCliente() {
     }
   };
 
-  if (editingClienteIdx !== null) {
-    clientes[editingClienteIdx] = cliente;
-    toast('Cliente atualizado!');
-  } else {
+  // Se for cliente NOVO, confirma com o servidor antes de salvar localmente
+  // (o servidor é quem sabe o limite de clientes do plano)
+  if (ehNovo) {
+    const res = await enviarClienteNuvem(cliente);
+    if (res.erro) { carregarInfoOficina(); return; } // bloqueado: limite do plano atingido
     clientes.push(cliente);
     toast('Cliente cadastrado com sucesso!');
+  } else {
+    clientes[editingClienteIdx] = cliente;
+    toast('Cliente atualizado!');
+    enviarClienteNuvem(cliente); // 🔄 Sync automático com Google Sheets
   }
 
   localStorage.setItem('oleo_clientes', JSON.stringify(clientes));
-  enviarClienteNuvem(cliente); // 🔄 Sync automático com Google Sheets
   closeModal('overlayCliente');
   renderClientes();
   refreshDashboard();
+  carregarInfoOficina();
 }
 
 function editarCliente(idx) {
@@ -4223,6 +4771,18 @@ refreshDashboard = function() {
 
 /* -------- INIT -------- */
 (function init() {
+  // ---- Gate de autenticação ----
+  if (MODO_MASTER) {
+    document.getElementById('loginMecanicoBox').style.display = 'none';
+    document.getElementById('loginAdminBox').style.display = '';
+    if (adminLogado) abrirPainelMaster();
+  } else {
+    if (mecanicoLogado) {
+      abrirApp();
+    }
+    // senão, fica parado na tela de login do mecânico (já visível por padrão)
+  }
+
   const savedTheme = localStorage.getItem('oleo_theme') || 'light';
   document.body.setAttribute('data-theme', savedTheme);
   document.documentElement.setAttribute('data-theme', savedTheme);
@@ -4282,6 +4842,9 @@ refreshDashboard = function() {
   </button>
   <button class="mobile-nav-item" style="flex-direction:column;border:1px solid var(--border);border-radius:10px;padding:12px 6px;background:var(--surface2)" onclick="navigate('alertas');closeMaisMenu();setActiveMobileNav('alertas')">
     <span class="mni-icon">🔔</span>Alertas
+  </button>
+  <button class="mobile-nav-item" style="flex-direction:column;border:1px solid var(--border);border-radius:10px;padding:12px 6px;background:var(--surface2)" onclick="navigate('equipe');closeMaisMenu();setActiveMobileNav('equipe')">
+    <span class="mni-icon">🧑‍🔧</span>Equipe
   </button>
   <button class="mobile-nav-item" style="flex-direction:column;border:1px solid var(--border);border-radius:10px;padding:12px 6px;background:var(--surface2)" onclick="navigate('config');closeMaisMenu();setActiveMobileNav('config')">
     <span class="mni-icon">⚙️</span>Config
