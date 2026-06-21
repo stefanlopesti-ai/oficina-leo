@@ -2864,11 +2864,10 @@ mark {
      ============================================================ -->
 <script>
 /* -------- GOOGLE SHEETS SYNC -------- */
-const SCRIPT_URL = '//script.google.com/macros/s/AKfycbyCjk3DJOo1UWPqAKvLQb_jT4ZB71iU9esSlf-R88H-qwU80BxafzQ_lDHZnt66bahm/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyCjk3DJOo1UWPqAKvLQb_jT4ZB71iU9esSlf-R88H-qwU80BxafzQ_lDHZnt66bahm/exec';
 
-// 🔧 TROQUE pelo ID que o painel master te der ao criar esta oficina.
-// Cada cópia deste arquivo entregue a um cliente deve ter o SEU PRÓPRIO OFICINA_ID.
-const OFICINA_ID = 'OF_TROQUE_AQUI';
+// OFICINA_ID vem automaticamente da URL (?id=OF...) — não precisa editar nada aqui.
+const OFICINA_ID = new URLSearchParams(location.search).get('id') || 'OF_TROQUE_AQUI';
 
 // 🔧 TROQUE pelo seu número de WhatsApp com DDI+DDD, só números (ex.: 5511987654321)
 const WHATSAPP_SUPORTE = '5521996656054';
@@ -3141,11 +3140,37 @@ async function criarOficinaAdmin() {
   const res = await apiNuvem({ acao: 'criarOficina', adminUser: adminLogado.usuario, adminSenha: adminLogado.senha, dados });
   if (res.erro) { resultEl.style.color = 'var(--red)'; resultEl.textContent = res.erro; return; }
 
+  const baseUrl = location.origin + location.pathname;
+  const urlMecanico = `${baseUrl}?id=${res.id}`;
+  const urlCliente  = baseUrl.replace('mecanico.html', 'client.html') + `?id=${res.id}`;
+
   resultEl.style.color = 'var(--green)';
-  resultEl.innerHTML = `✅ Oficina criada! <b>OFICINA_ID: ${res.id}</b><br>
-    Coloque esse ID na constante OFICINA_ID do oficina.html e do client.html que você vai entregar pra esse cliente.<br>
-    ${res.mecanicoCriado ? `Login do mecânico criado: <b>${res.mecanicoCriado}</b> / senha: <b>${dados.mecanicoSenha}</b> — avise o cliente.<br>` : '⚠️ Nenhum login de mecânico criado ainda — adicione um na aba Equipe depois de configurar o OFICINA_ID.<br>'}
-    <a href="${res.sheetUrl}" target="_blank">Abrir a planilha desta oficina →</a>`;
+  resultEl.innerHTML = `
+    <div style="background:var(--green-bg);border:1px solid var(--green);border-radius:10px;padding:16px;color:#065F46;margin-bottom:8px;">
+      <b>✅ Oficina criada com sucesso!</b><br><br>
+
+      <div style="margin-bottom:10px;">
+        <span style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;">🔧 URL do Mecânico</span><br>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap;">
+          <code style="background:#fff;padding:4px 8px;border-radius:6px;font-size:12px;flex:1;word-break:break-all;">${urlMecanico}</code>
+          <button onclick="navigator.clipboard.writeText('${urlMecanico}').then(()=>this.textContent='✅ Copiado!');setTimeout(()=>this.textContent='📋 Copiar',2000)"
+            style="background:var(--green);color:#fff;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;font-weight:700;white-space:nowrap;">📋 Copiar</button>
+        </div>
+        ${res.mecanicoCriado ? `<span style="font-size:12px;">Login: <b>${res.mecanicoCriado}</b> &nbsp;|&nbsp; Senha: <b>${dados.mecanicoSenha}</b></span>` : '<span style="font-size:12px;color:#B45309;">⚠️ Nenhum login de mecânico criado — cadastre na aba Equipe após acessar.</span>'}
+      </div>
+
+      <div style="margin-bottom:10px;">
+        <span style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;">👤 URL do Cliente</span><br>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap;">
+          <code style="background:#fff;padding:4px 8px;border-radius:6px;font-size:12px;flex:1;word-break:break-all;">${urlCliente}</code>
+          <button onclick="navigator.clipboard.writeText('${urlCliente}').then(()=>this.textContent='✅ Copiado!');setTimeout(()=>this.textContent='📋 Copiar',2000)"
+            style="background:var(--green);color:#fff;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;font-weight:700;white-space:nowrap;">📋 Copiar</button>
+        </div>
+      </div>
+
+      <a href="${res.sheetUrl}" target="_blank" style="color:#065F46;font-size:13px;">📊 Abrir planilha desta oficina →</a>
+    </div>
+  `;
   document.getElementById('adm-novo-nome').value = '';
   document.getElementById('adm-mec-nome').value = '';
   document.getElementById('adm-mec-usuario').value = '';
