@@ -952,7 +952,11 @@ body {
 // ============================================================
 const SCRIPT_URL_KEY = 'oficina_leo_script_url';
 const CLIENTE_KEY    = 'oficina_leo_cliente';
-let   SCRIPT_URL     = localStorage.getItem(SCRIPT_URL_KEY) || 'https://script.google.com/macros/s/AKfycbxNIi6bd2yjEi5zoNzUIZwi-ku_Dkdi3zEQxVOlF69hxwCPP3tH4zld1CCZdfI0869O/exec';
+let   SCRIPT_URL     = localStorage.getItem(SCRIPT_URL_KEY) || 'https://script.google.com/macros/s/AKfycbyCjk3DJOo1UWPqAKvLQb_jT4ZB71iU9esSlf-R88H-qwU80BxafzQ_lDHZnt66bahm/exec';
+
+// OFICINA_ID vem automaticamente da URL (?id=OF...) — não precisa editar nada aqui.
+const OFICINA_ID = new URLSearchParams(location.search).get('id') || 'OF_TROQUE_AQUI';
+
 let   clienteLogado  = null;
 let   ordens         = [];
 let   osAtual        = null;
@@ -1367,6 +1371,7 @@ function sair() {
 // ============================================================
 async function api(dados) {
   try {
+    if (dados.oficinaId === undefined) dados.oficinaId = OFICINA_ID;
     const res = await fetch(SCRIPT_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
