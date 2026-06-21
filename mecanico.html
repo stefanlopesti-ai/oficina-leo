@@ -2864,13 +2864,23 @@ mark {
      ============================================================ -->
 <script>
 /* -------- GOOGLE SHEETS SYNC -------- */
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyCjk3DJOo1UWPqAKvLQb_jT4ZB71iU9esSlf-R88H-qwU80BxafzQ_lDHZnt66bahm/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxNIi6bd2yjEi5zoNzUIZwi-ku_Dkdi3zEQxVOlF69hxwCPP3tH4zld1CCZdfI0869O/exec';
 
-// OFICINA_ID vem automaticamente da URL (?id=OF...) — não precisa editar nada aqui.
-const OFICINA_ID = new URLSearchParams(location.search).get('id') || 'OF_TROQUE_AQUI';
+// 🔧 TROQUE pelo ID que o painel master te der ao criar esta oficina.
+// Cada cópia deste arquivo entregue a um cliente deve ter o SEU PRÓPRIO OFICINA_ID.
+// 🔧 Pode vir pela URL (?oficinaId=OFxxxx) — assim você hospeda este arquivo
+// uma única vez e cada oficina-cliente usa o link com o ID dela.
+// Se não vier na URL, usa o valor fixo abaixo (caso prefira uma cópia por cliente).
+const OFICINA_ID = new URLSearchParams(location.search).get('oficinaId') || 'OF_TROQUE_AQUI';
 
 // 🔧 TROQUE pelo seu número de WhatsApp com DDI+DDD, só números (ex.: 5511987654321)
 const WHATSAPP_SUPORTE = '5521996656054';
+
+// 🔧 TROQUE pelos links de onde você hospedou esses dois arquivos
+// (ex.: GitHub Pages, Netlify, Vercel, seu próprio site...).
+// O painel master usa isso pra montar o link de cada oficina-cliente.
+const BASE_URL_OFICINA = 'https://SEUSITE.com/oficina.html';
+const BASE_URL_CLIENTE = 'https://SEUSITE.com/client.html';
 
 // Catálogo de planos (espelha o do backend, só pra exibir nome/preço bonitinho)
 const PLANOS_CATALOGO = {
@@ -3017,6 +3027,19 @@ function aoMudarPlanoNovo() {
   document.getElementById('adm-novo-limiteClientes').value = limite == null ? '' : limite;
 }
 
+async function copiarLink(texto) {
+  try {
+    await navigator.clipboard.writeText(texto);
+    toast('Link copiado! 📋');
+  } catch(e) {
+    // fallback pra navegadores/contextos sem permissão de clipboard
+    const ta = document.createElement('textarea');
+    ta.value = texto; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    toast('Link copiado! 📋');
+  }
+}
+
 async function carregarSolicitacoesAdmin() {
   const cont = document.getElementById('adm-lista-solicitacoes');
   const res = await apiNuvem({ acao: 'listarSolicitacoes', adminUser: adminLogado.usuario, adminSenha: adminLogado.senha });
@@ -3065,7 +3088,7 @@ async function carregarOficinasAdmin() {
           <th style="padding:8px;">OFICINA_ID</th><th style="padding:8px;">Nome</th>
           <th style="padding:8px;">Plano</th><th style="padding:8px;">Limite clientes</th>
           <th style="padding:8px;">Limite mecânicos</th><th style="padding:8px;">Status</th>
-          <th style="padding:8px;">Validade</th><th style="padding:8px;"></th>
+          <th style="padding:8px;">Validade</th><th style="padding:8px;">Links</th><th style="padding:8px;"></th>
         </tr>
       </thead>
       <tbody>
@@ -3087,7 +3110,14 @@ async function carregarOficinasAdmin() {
               </select>
             </td>
             <td style="padding:8px;"><input type="date" style="padding:4px;" value="${of.validade || ''}" id="of-validade-${of.id}"></td>
-            <td style="padding:8px;"><button class="btn btn-outline" style="padding:4px 10px;font-size:13px;" onclick="salvarOficinaAdmin('${of.id}')">Salvar</button></td>
+            <td style="padding:8px;white-space:nowrap;">
+              <button class="btn btn-outline" style="padding:4px 10px;font-size:13px;margin-bottom:4px;" onclick="copiarLink('${BASE_URL_OFICINA}?oficinaId=${of.id}')">🔧 Copiar link oficina</button><br>
+              <button class="btn btn-outline" style="padding:4px 10px;font-size:13px;" onclick="copiarLink('${BASE_URL_CLIENTE}?oficinaId=${of.id}')">👤 Copiar link cliente</button>
+            </td>
+            <td style="padding:8px;white-space:nowrap;">
+              <button class="btn btn-outline" style="padding:4px 10px;font-size:13px;margin-bottom:4px;" onclick="salvarOficinaAdmin('${of.id}')">Salvar</button><br>
+              <button class="btn btn-outline" style="padding:4px 10px;font-size:13px;color:var(--red);" onclick="excluirOficinaAdmin('${of.id}','${of.nome}')">🗑️ Excluir</button>
+            </td>
           </tr>
         `).join('')}
       </tbody>
@@ -3105,6 +3135,14 @@ function aoMudarPlanoExistente(id) {
   const plano = document.getElementById('of-plano-' + id).value;
   const limite = PLANOS_CATALOGO[plano]?.limiteClientes;
   document.getElementById('of-limCli-' + id).value = limite == null ? '' : limite;
+}
+
+async function excluirOficinaAdmin(id, nome) {
+  if (!confirm(`Excluir a oficina "${nome}" (${id})?\n\nA planilha dela vai pra lixeira do Google Drive (não é apagada na hora, dá pra restaurar). Os logins de mecânico e cliente dela deixam de funcionar imediatamente.`)) return;
+  const res = await apiNuvem({ acao: 'deletarOficina', adminUser: adminLogado.usuario, adminSenha: adminLogado.senha, id });
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  toast('Oficina excluída ✅');
+  carregarOficinasAdmin();
 }
 
 async function salvarOficinaAdmin(id) {
@@ -3140,37 +3178,16 @@ async function criarOficinaAdmin() {
   const res = await apiNuvem({ acao: 'criarOficina', adminUser: adminLogado.usuario, adminSenha: adminLogado.senha, dados });
   if (res.erro) { resultEl.style.color = 'var(--red)'; resultEl.textContent = res.erro; return; }
 
-  const baseUrl = location.origin + location.pathname;
-  const urlMecanico = `${baseUrl}?id=${res.id}`;
-  const urlCliente  = baseUrl.replace('mecanico.html', 'client.html') + `?id=${res.id}`;
-
   resultEl.style.color = 'var(--green)';
-  resultEl.innerHTML = `
-    <div style="background:var(--green-bg);border:1px solid var(--green);border-radius:10px;padding:16px;color:#065F46;margin-bottom:8px;">
-      <b>✅ Oficina criada com sucesso!</b><br><br>
-
-      <div style="margin-bottom:10px;">
-        <span style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;">🔧 URL do Mecânico</span><br>
-        <div style="display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap;">
-          <code style="background:#fff;padding:4px 8px;border-radius:6px;font-size:12px;flex:1;word-break:break-all;">${urlMecanico}</code>
-          <button onclick="navigator.clipboard.writeText('${urlMecanico}').then(()=>this.textContent='✅ Copiado!');setTimeout(()=>this.textContent='📋 Copiar',2000)"
-            style="background:var(--green);color:#fff;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;font-weight:700;white-space:nowrap;">📋 Copiar</button>
-        </div>
-        ${res.mecanicoCriado ? `<span style="font-size:12px;">Login: <b>${res.mecanicoCriado}</b> &nbsp;|&nbsp; Senha: <b>${dados.mecanicoSenha}</b></span>` : '<span style="font-size:12px;color:#B45309;">⚠️ Nenhum login de mecânico criado — cadastre na aba Equipe após acessar.</span>'}
-      </div>
-
-      <div style="margin-bottom:10px;">
-        <span style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;">👤 URL do Cliente</span><br>
-        <div style="display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap;">
-          <code style="background:#fff;padding:4px 8px;border-radius:6px;font-size:12px;flex:1;word-break:break-all;">${urlCliente}</code>
-          <button onclick="navigator.clipboard.writeText('${urlCliente}').then(()=>this.textContent='✅ Copiado!');setTimeout(()=>this.textContent='📋 Copiar',2000)"
-            style="background:var(--green);color:#fff;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;font-weight:700;white-space:nowrap;">📋 Copiar</button>
-        </div>
-      </div>
-
-      <a href="${res.sheetUrl}" target="_blank" style="color:#065F46;font-size:13px;">📊 Abrir planilha desta oficina →</a>
+  const linkOficina = `${BASE_URL_OFICINA}?oficinaId=${res.id}`;
+  const linkCliente = `${BASE_URL_CLIENTE}?oficinaId=${res.id}`;
+  resultEl.innerHTML = `✅ Oficina criada! <b>OFICINA_ID: ${res.id}</b><br>
+    ${res.mecanicoCriado ? `Login do mecânico criado: <b>${res.mecanicoCriado}</b> / senha: <b>${dados.mecanicoSenha}</b> — avise o cliente.<br>` : '⚠️ Nenhum login de mecânico criado ainda — adicione um na aba Equipe depois.<br>'}
+    <div style="margin-top:10px;">
+      <button class="btn btn-outline" style="padding:4px 10px;font-size:13px;" onclick="copiarLink('${linkOficina}')">🔧 Copiar link da oficina</button>
+      <button class="btn btn-outline" style="padding:4px 10px;font-size:13px;" onclick="copiarLink('${linkCliente}')">👤 Copiar link do cliente</button>
     </div>
-  `;
+    <a href="${res.sheetUrl}" target="_blank">Abrir a planilha desta oficina →</a>`;
   document.getElementById('adm-novo-nome').value = '';
   document.getElementById('adm-mec-nome').value = '';
   document.getElementById('adm-mec-usuario').value = '';
