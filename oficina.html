@@ -3038,6 +3038,45 @@ function abrirApp() {
   const dashNome = document.getElementById('dashNomeMecanico');
   if (dashNome && mecanicoLogado) dashNome.textContent = mecanicoLogado.nome || mecanicoLogado.usuario;
   carregarInfoOficina();
+  iniciarPollingOS(); // inicia atualização automática a cada 30s
+}
+
+// ---- Polling automático de OS (detecta aprovações do cliente em tempo real) ----
+let _pollingTimer = null;
+
+function iniciarPollingOS() {
+  pararPollingOS();
+  _pollingTimer = setInterval(async () => {
+    try {
+      const res = await apiNuvem({ acao: 'listarOrdens' });
+      if (!res.ok || !res.ordens) return;
+
+      // Detecta OS que mudaram de status desde o último sync
+      const alteradas = res.ordens.filter(nova => {
+        const antiga = ordens.find(o => String(o.id) === String(nova.id));
+        return antiga && antiga.status !== nova.status;
+      });
+
+      // Atualiza as ordens em memória e localStorage
+      ordens = res.ordens;
+      localStorage.setItem('oleo_os', JSON.stringify(ordens));
+
+      // Notifica e atualiza a tela para cada OS que mudou
+      alteradas.forEach(os => {
+        const icone = os.status === 'Em andamento' ? '✅' : (os.status === 'Negado' ? '🚫' : '🔔');
+        toast(`${icone} OS #${String(os.id).slice(-6)} — cliente ${os.status === 'Em andamento' ? 'APROVOU' : (os.status === 'Negado' ? 'RECUSOU' : 'atualizou para: ' + os.status)} o orçamento`, 3500);
+      });
+
+      if (alteradas.length > 0) {
+        renderOS();
+        refreshDashboard && refreshDashboard();
+      }
+    } catch(e) { /* ignora falhas silenciosamente */ }
+  }, 30000); // a cada 30 segundos
+}
+
+function pararPollingOS() {
+  if (_pollingTimer) { clearInterval(_pollingTimer); _pollingTimer = null; }
 }
 
 async function fazerLoginMecanico() {
