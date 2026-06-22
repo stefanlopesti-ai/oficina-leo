@@ -2438,12 +2438,59 @@ mark {
     <div class="card">
       <div class="card-head"><div class="card-head-title">Fazer upgrade</div></div>
       <div style="color:var(--text-muted);font-size:13px;margin-bottom:14px;">
-        Escolha o plano desejado. Você vai pro WhatsApp pra combinar o pagamento via Pix —
-        depois que o pagamento for confirmado, seu plano é liberado.
+        Escolha o plano desejado. Você verá os dados Pix para pagamento e poderá enviar o comprovante
+        diretamente pelo WhatsApp — depois que o pagamento for confirmado, seu plano é liberado.
       </div>
       <div id="planosDisponiveis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;"></div>
     </div>
   </div>
+
+<!-- ============================================================
+     MODAL — CONFIRMAÇÃO DE UPGRADE + PIX
+     ============================================================ -->
+<div class="overlay" id="overlayConfirmarUpgrade">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header">
+      <span class="modal-title">🚀 Confirmar Upgrade</span>
+      <button class="modal-close" onclick="closeModal('overlayConfirmarUpgrade')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="margin-bottom:16px;color:var(--text-muted);font-size:14px;">
+        Você está solicitando upgrade para <strong id="upgradeNomePlano"></strong>.
+        Realize o pagamento via Pix e envie o comprovante pelo WhatsApp.
+      </p>
+
+      <!-- Dados Pix -->
+      <div style="background:var(--surface2);border-radius:10px;padding:16px;margin-bottom:16px;">
+        <div style="font-weight:700;margin-bottom:10px;font-size:14px;">📲 Dados para pagamento Pix</div>
+        <div style="font-size:13px;margin-bottom:6px;">
+          <span style="color:var(--text-muted);">Chave Pix (Telefone):</span><br>
+          <span style="font-weight:700;font-size:15px;">+55 (21) 99665-6054</span>
+          <button onclick="copiarTexto('5521996656054','Telefone copiado!')" class="btn btn-outline" style="padding:2px 8px;font-size:11px;margin-left:8px;">Copiar</button>
+        </div>
+        <div style="font-size:13px;margin-bottom:6px;">
+          <span style="color:var(--text-muted);">Chave Pix (CPF):</span><br>
+          <span style="font-weight:700;font-size:15px;">053.383.257-80</span>
+          <button onclick="copiarTexto('05338325780','CPF copiado!')" class="btn btn-outline" style="padding:2px 8px;font-size:11px;margin-left:8px;">Copiar</button>
+        </div>
+        <div style="font-size:13px;">
+          <span style="color:var(--text-muted);">Beneficiário:</span><br>
+          <span style="font-weight:600;">Stefan Lopes de Aquino</span>
+        </div>
+      </div>
+
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:0;">
+        Após o pagamento, clique em <strong>"Enviar comprovante"</strong> para nos avisar via WhatsApp. Seu plano será liberado em breve! ✅
+      </p>
+    </div>
+    <div class="modal-footer" style="gap:10px;">
+      <button class="btn btn-outline" onclick="closeModal('overlayConfirmarUpgrade')">Cancelar</button>
+      <button class="btn btn-primary" id="btnEnviarComprovante" onclick="confirmarEEnviarComprovante()">
+        📲 Enviar comprovante
+      </button>
+    </div>
+  </div>
+</div>
 
   <div class="page-content" id="page-equipe">
     <div class="card" style="margin-bottom:20px;">
@@ -3061,7 +3108,32 @@ async function carregarSolicitacoesAdmin() {
   if (res.erro) { cont.innerHTML = '<p style="color:var(--red);">' + res.erro + '</p>'; return; }
 
   const pendentes = res.solicitacoes.filter(s => s.status === 'pendente');
+
+  // Atualiza o badge do título da seção
+  const tituloSec = document.querySelector('#painelMaster .card-head-title');
+  // Atualiza o título da seção de solicitações com badge
+  const secCards = document.querySelectorAll('#painelMaster .card');
+  if (secCards[0]) {
+    const tHead = secCards[0].querySelector('.card-head-title');
+    if (tHead) {
+      tHead.innerHTML = pendentes.length > 0
+        ? `📲 Solicitações de upgrade pendentes <span style="background:var(--red);color:#fff;border-radius:99px;padding:1px 9px;font-size:12px;margin-left:6px;">${pendentes.length}</span>`
+        : '📲 Solicitações de upgrade pendentes';
+    }
+  }
+
   if (!pendentes.length) { cont.innerHTML = '<p style="color:var(--text-muted);">Nenhuma solicitação pendente. ✅</p>'; return; }
+
+  // Alerta visual no topo do painel quando há pendentes
+  let alertaTopo = document.getElementById('adm-alerta-pendentes');
+  if (!alertaTopo) {
+    alertaTopo = document.createElement('div');
+    alertaTopo.id = 'adm-alerta-pendentes';
+    alertaTopo.style.cssText = 'background:var(--amber,#f59e0b);color:#000;padding:12px 18px;border-radius:10px;font-weight:700;font-size:14px;margin-bottom:16px;display:flex;align-items:center;gap:10px;';
+    const painelMaster = document.getElementById('painelMaster');
+    if (painelMaster) painelMaster.insertBefore(alertaTopo, painelMaster.firstChild);
+  }
+  alertaTopo.innerHTML = `⚠️ ${pendentes.length} solicitação${pendentes.length > 1 ? 'ões' : ''} de upgrade aguardando confirmação de pagamento!`;
 
   cont.innerHTML = pendentes.map(s => `
     <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);gap:10px;flex-wrap:wrap;">
@@ -3072,7 +3144,10 @@ async function carregarSolicitacoesAdmin() {
           ${s.solicitante ? ' — pedido por ' + s.solicitante : ''} em ${new Date(s.ts).toLocaleString('pt-BR')}
         </span>
       </div>
-      <button class="btn btn-outline" style="padding:4px 10px;font-size:13px;" onclick="marcarSolicitacaoAtendidaAdmin('${s.id}')">Marcar como atendida</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <a href="https://wa.me/${WHATSAPP_SUPORTE}" target="_blank" class="btn btn-outline" style="padding:4px 10px;font-size:13px;text-decoration:none;">📲 Ver comprovante</a>
+        <button class="btn btn-outline" style="padding:4px 10px;font-size:13px;" onclick="marcarSolicitacaoAtendidaAdmin('${s.id}')">Marcar como atendida</button>
+      </div>
     </div>
   `).join('');
 }
@@ -3291,15 +3366,53 @@ async function carregarPlano() {
   `).join('');
 }
 
-async function solicitarUpgradePlano(planoKey, planoNome) {
-  const solicitante = mecanicoLogado ? (mecanicoLogado.nome || mecanicoLogado.usuario) : '';
-  await apiNuvem({ acao: 'solicitarUpgrade', planoDesejado: planoKey, solicitante });
+// Guarda o estado do upgrade em andamento
+let _upgradePendente = { planoKey: null, planoNome: null };
 
+async function solicitarUpgradePlano(planoKey, planoNome) {
+  _upgradePendente = { planoKey, planoNome };
+
+  // Atualiza o nome do plano no modal
+  const el = document.getElementById('upgradeNomePlano');
+  if (el) el.textContent = planoNome;
+
+  // Abre o modal de confirmação com os dados Pix
+  openModal('overlayConfirmarUpgrade');
+}
+
+async function confirmarEEnviarComprovante() {
+  const { planoKey, planoNome } = _upgradePendente;
+  if (!planoKey) return;
+
+  const solicitante = mecanicoLogado ? (mecanicoLogado.nome || mecanicoLogado.usuario) : '';
+
+  // Registra a solicitação no backend (mesma chamada de antes)
+  try {
+    await apiNuvem({ acao: 'solicitarUpgrade', planoDesejado: planoKey, solicitante });
+  } catch(e) {
+    // mesmo se falhar, abre o WhatsApp
+  }
+
+  closeModal('overlayConfirmarUpgrade');
+
+  // Abre WhatsApp com mensagem de comprovante
   const msg = encodeURIComponent(
-    `Olá! Quero fazer upgrade da minha oficina "${infoOficinaAtual?.oficina?.nome || ''}" (OFICINA_ID: ${OFICINA_ID}) para o ${planoNome}. Vou enviar o comprovante do Pix por aqui.`
+    `Olá, Stefan! Realizei o pagamento via Pix e gostaria de enviar o comprovante para upgrade da minha oficina "${infoOficinaAtual?.oficina?.nome || ''}" (ID: ${OFICINA_ID}) para o ${planoNome}. Segue o comprovante abaixo 👇`
   );
   window.open(`https://wa.me/${WHATSAPP_SUPORTE}?text=${msg}`, '_blank');
-  toast('Solicitação registrada! Finalize o pedido no WhatsApp que abriu 📲');
+
+  toast('Comprovante enviado via WhatsApp! Aguarde a liberação do plano 🚀');
+}
+
+function copiarTexto(texto, msg) {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(texto).then(() => toast(msg || 'Copiado! 📋'));
+  } else {
+    const ta = document.createElement('textarea');
+    ta.value = texto; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    toast(msg || 'Copiado! 📋');
+  }
 }
 
 
