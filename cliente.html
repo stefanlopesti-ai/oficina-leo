@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Oficina do Léo — Área do Cliente</title>
+<title>OficinaAppSSJ — Área do Cliente</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -814,18 +814,12 @@ body {
   <div class="login-box">
     <div class="login-logo">
       <div class="logo-icon">🔧</div>
-      <h1>Oficina do Léo</h1>
+      <h1 id="nomeOficinaLogin">Carregando...</h1>
       <p>Área do cliente</p>
-    </div>
-
-    <div class="login-tabs">
-      <button class="login-tab ativo" onclick="trocarAba('entrar')">Entrar</button>
-      <button class="login-tab" onclick="trocarAba('criar')">Criar senha</button>
     </div>
 
     <div id="erro-login" class="erro-msg"></div>
 
-    <!-- ABA ENTRAR -->
     <div id="aba-entrar">
       <div class="form-group">
         <label>CPF</label>
@@ -838,29 +832,105 @@ body {
       <button class="btn-primary" id="btn-login" onclick="fazerLogin()">
         Entrar
       </button>
+      <p style="font-size:0.78rem;color:var(--muted);text-align:center;margin-top:14px;">
+        <a href="#" onclick="abrirEsqueciSenha();return false;">Esqueci minha senha</a>
+      </p>
+      <p style="font-size:0.72rem;color:var(--muted);text-align:center;margin-top:6px;line-height:1.5">
+        Seu CPF precisa já estar cadastrado pelo mecânico. Se for seu primeiro acesso, a senha é <b>123456</b>.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     TELA: PRIMEIRO ACESSO (troca obrigatória de senha + pergunta de segurança)
+     ============================================================ -->
+<div class="tela" id="tela-primeiro-acesso">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="logo-icon">🔐</div>
+      <h1>Primeiro acesso</h1>
+      <p>Antes de continuar, troque sua senha e cadastre uma forma de recuperá-la</p>
     </div>
 
-    <!-- ABA CRIAR SENHA -->
-    <div id="aba-criar" style="display:none">
+    <div id="erro-primeiro" class="erro-msg"></div>
+
+    <div class="form-group">
+      <label>Nova senha</label>
+      <input type="password" id="pa-nova-senha" placeholder="Mínimo 4 caracteres">
+    </div>
+    <div class="form-group">
+      <label>Confirmar nova senha</label>
+      <input type="password" id="pa-nova-senha2" placeholder="Repita a senha">
+    </div>
+    <div class="form-group">
+      <label>Pergunta de segurança</label>
+      <select id="pa-pergunta">
+        <option value="Qual o nome do seu primeiro animal de estimação?">Qual o nome do seu primeiro animal de estimação?</option>
+        <option value="Qual o nome da sua mãe?">Qual o nome da sua mãe?</option>
+        <option value="Qual sua cidade de nascimento?">Qual sua cidade de nascimento?</option>
+        <option value="Qual o nome da sua primeira escola?">Qual o nome da sua primeira escola?</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Resposta</label>
+      <input type="text" id="pa-resposta" placeholder="Sua resposta (lembre-se dela!)">
+    </div>
+    <div class="form-group" id="pa-origem-box">
+      <label>Como você conheceu a oficina?</label>
+      <select id="pa-origem">
+        <option value="Indicação de amigo/familiar">Indicação de amigo/familiar</option>
+        <option value="Redes sociais">Redes sociais</option>
+        <option value="Google / busca na internet">Google / busca na internet</option>
+        <option value="Já era cliente antes">Já era cliente antes</option>
+        <option value="Passando na rua">Passando na rua</option>
+        <option value="Outro">Outro</option>
+      </select>
+    </div>
+    <button class="btn-primary btn-accent" onclick="confirmarPrimeiroAcesso()">Salvar e entrar</button>
+  </div>
+</div>
+
+<!-- ============================================================
+     TELA: ESQUECI A SENHA
+     ============================================================ -->
+<div class="tela" id="tela-esqueci">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="logo-icon">🔑</div>
+      <h1>Esqueci minha senha</h1>
+    </div>
+
+    <div id="erro-esqueci" class="erro-msg"></div>
+
+    <div id="esqueci-passo1">
       <div class="form-group">
-        <label>Seu CPF</label>
-        <input type="text" id="criar-cpf" placeholder="000.000.000-00" oninput="mascCPF(this)" inputmode="numeric">
+        <label>CPF</label>
+        <input type="text" id="esqueci-cpf" placeholder="000.000.000-00" oninput="mascCPF(this)" inputmode="numeric">
+      </div>
+      <button class="btn-primary" onclick="buscarPerguntaSeguranca()">Continuar</button>
+    </div>
+
+    <div id="esqueci-passo2" style="display:none">
+      <p id="esqueci-pergunta-texto" style="font-weight:600;margin-bottom:14px;"></p>
+      <div class="form-group">
+        <label>Resposta</label>
+        <input type="text" id="esqueci-resposta" placeholder="Sua resposta">
       </div>
       <div class="form-group">
         <label>Nova senha</label>
-        <input type="password" id="criar-senha" placeholder="Mínimo 4 caracteres">
+        <input type="password" id="esqueci-nova-senha" placeholder="Mínimo 4 caracteres">
       </div>
       <div class="form-group">
-        <label>Confirmar senha</label>
-        <input type="password" id="criar-senha2" placeholder="Repita a senha" onkeydown="if(event.key==='Enter')criarSenha()">
+        <label>Confirmar nova senha</label>
+        <input type="password" id="esqueci-nova-senha2" placeholder="Repita a senha">
       </div>
-      <button class="btn-primary btn-accent" id="btn-criar" onclick="criarSenha()">
-        Criar senha e entrar
-      </button>
-      <p style="font-size:0.72rem;color:var(--muted);text-align:center;margin-top:12px;line-height:1.5">
-        Seu CPF precisa já estar cadastrado pelo mecânico
-      </p>
+      <button class="btn-primary btn-accent" onclick="confirmarRecuperacaoSenha()">Trocar senha</button>
     </div>
+
+    <p style="font-size:0.78rem;color:var(--muted);text-align:center;margin-top:14px;">
+      <a href="#" onclick="mostrarTela('login');return false;">← Voltar pro login</a>
+    </p>
   </div>
 </div>
 
@@ -873,8 +943,9 @@ body {
     <div class="header-top">
       <div class="header-logo">
         <div class="logo-mini">🔧</div>
-        <span>Oficina do Léo</span>
+        <span id="nomeOficinaHeader">Oficina</span>
       </div>
+      <button class="btn-sair" onclick="abrirMeuCadastro()" style="margin-right:6px;">👤 Meu cadastro</button>
       <button class="btn-sair" onclick="sair()">Sair</button>
     </div>
     <div class="header-greeting" id="header-nome">
@@ -905,6 +976,22 @@ body {
       </div>
     </div>
 
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: MEU CADASTRO (somente leitura)
+     ============================================================ -->
+<div class="overlay" id="overlay-cadastro" onclick="fecharModalCadastro()">
+  <div class="modal-sheet" onclick="event.stopPropagation()">
+    <div class="modal-drag"></div>
+    <div class="modal-header">
+      <div class="modal-title">Meu cadastro</div>
+      <button class="btn-fechar" onclick="fecharModalCadastro()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-cadastro-body">
+      <!-- conteúdo gerado via JS -->
+    </div>
   </div>
 </div>
 
@@ -972,6 +1059,7 @@ window.addEventListener('DOMContentLoaded', function() {
     mostrarTela('config');
     return;
   }
+  carregarNomeOficina();
   const salvo = localStorage.getItem(CLIENTE_KEY);
   if (salvo) {
     clienteLogado = JSON.parse(salvo);
@@ -981,6 +1069,15 @@ window.addEventListener('DOMContentLoaded', function() {
     mostrarTela('login');
   }
 });
+
+async function carregarNomeOficina() {
+  const res = await api({ acao: 'infoOficina' });
+  const nome = (res && res.ok && res.oficina && res.oficina.nome) ? res.oficina.nome : 'Oficina';
+  const el1 = document.getElementById('nomeOficinaLogin');
+  const el2 = document.getElementById('nomeOficinaHeader');
+  if (el1) el1.textContent = nome;
+  if (el2) el2.textContent = nome;
+}
 
 function mostrarTela(nome) {
   document.querySelectorAll('.tela').forEach(t => t.classList.remove('ativa'));
@@ -1002,30 +1099,23 @@ function salvarUrl() {
 }
 
 // ============================================================
-//  ABAS LOGIN
+//  ERROS (genérico, recebe o id do elemento de erro)
 // ============================================================
-function trocarAba(aba) {
-  document.getElementById('aba-entrar').style.display = aba === 'entrar' ? 'block' : 'none';
-  document.getElementById('aba-criar').style.display  = aba === 'criar'  ? 'block' : 'none';
-  document.querySelectorAll('.login-tab').forEach((t, i) => {
-    t.classList.toggle('ativo', (i === 0 && aba === 'entrar') || (i === 1 && aba === 'criar'));
-  });
-  esconderErro();
-}
-
-function mostrarErro(msg) {
-  const el = document.getElementById('erro-login');
+function mostrarErro(msg, elId) {
+  const el = document.getElementById(elId || 'erro-login');
   el.textContent = msg;
   el.classList.add('visivel');
 }
 
-function esconderErro() {
-  document.getElementById('erro-login').classList.remove('visivel');
+function esconderErro(elId) {
+  document.getElementById(elId || 'erro-login').classList.remove('visivel');
 }
 
 // ============================================================
 //  LOGIN
 // ============================================================
+let senhaLoginTemp = ''; // guarda a senha digitada no login, só em memória, pra usar no primeiro acesso sem pedir de novo
+
 async function fazerLogin() {
   const cpf   = document.getElementById('login-cpf').value.trim();
   const senha = document.getElementById('login-senha').value;
@@ -1041,6 +1131,14 @@ async function fazerLogin() {
     if (res.erro) { mostrarErro(res.erro); return; }
 
     clienteLogado = res.cliente;
+
+    if (res.precisaTrocarSenha) {
+      senhaLoginTemp = senha;
+      document.getElementById('pa-origem-box').style.display = res.origemConfirmada ? 'none' : '';
+      mostrarTela('primeiro-acesso');
+      return;
+    }
+
     localStorage.setItem(CLIENTE_KEY, JSON.stringify(clienteLogado));
     mostrarTela('home');
     carregarOrdens();
@@ -1054,36 +1152,75 @@ async function fazerLogin() {
 }
 
 // ============================================================
-//  CRIAR SENHA
+//  PRIMEIRO ACESSO (troca obrigatória de senha + pergunta de segurança)
 // ============================================================
-async function criarSenha() {
-  const cpf    = document.getElementById('criar-cpf').value.trim();
-  const senha  = document.getElementById('criar-senha').value;
-  const senha2 = document.getElementById('criar-senha2').value;
+async function confirmarPrimeiroAcesso() {
+  const novaSenha  = document.getElementById('pa-nova-senha').value;
+  const novaSenha2 = document.getElementById('pa-nova-senha2').value;
+  const pergunta   = document.getElementById('pa-pergunta').value;
+  const resposta   = document.getElementById('pa-resposta').value.trim();
+  const origemBoxVisivel = document.getElementById('pa-origem-box').style.display !== 'none';
+  const origem     = origemBoxVisivel ? document.getElementById('pa-origem').value : undefined;
 
-  if (!cpf)   { mostrarErro('Informe seu CPF'); return; }
-  if (senha.length < 4) { mostrarErro('Senha deve ter pelo menos 4 caracteres'); return; }
-  if (senha !== senha2) { mostrarErro('As senhas não coincidem'); return; }
+  if (novaSenha.length < 4) { mostrarErro('A nova senha precisa ter pelo menos 4 caracteres', 'erro-primeiro'); return; }
+  if (novaSenha !== novaSenha2) { mostrarErro('As senhas não coincidem', 'erro-primeiro'); return; }
+  if (!resposta) { mostrarErro('Preencha a resposta de segurança', 'erro-primeiro'); return; }
+  esconderErro('erro-primeiro');
 
-  const btn = document.getElementById('btn-criar');
-  btn.classList.add('loading');
-  btn.textContent = 'Criando...';
-  esconderErro();
+  const res = await api({
+    acao: 'primeiroAcessoCliente',
+    cpf: clienteLogado.cpf, senhaAtual: senhaLoginTemp, novaSenha, pergunta, resposta, origem
+  });
+  if (res.erro) { mostrarErro(res.erro, 'erro-primeiro'); return; }
 
-  try {
-    const res = await api({ acao: 'criarSenhaCliente', cpf, senha });
-    if (res.erro) { mostrarErro(res.erro); return; }
+  senhaLoginTemp = '';
+  toast('Tudo certo! Você já pode usar o app.', '✅');
+  localStorage.setItem(CLIENTE_KEY, JSON.stringify(clienteLogado));
+  mostrarTela('home');
+  carregarOrdens();
+}
 
-    toast('Senha criada! Faça o login.', '✅');
-    trocarAba('entrar');
-    document.getElementById('login-cpf').value = cpf;
+// ============================================================
+//  ESQUECI A SENHA
+// ============================================================
+function abrirEsqueciSenha() {
+  document.getElementById('esqueci-passo1').style.display = '';
+  document.getElementById('esqueci-passo2').style.display = 'none';
+  document.getElementById('esqueci-cpf').value = '';
+  esconderErro('erro-esqueci');
+  mostrarTela('esqueci');
+}
 
-  } catch(e) {
-    mostrarErro('Erro de conexão. Verifique a URL do Apps Script.');
-  } finally {
-    btn.classList.remove('loading');
-    btn.textContent = 'Criar senha e entrar';
-  }
+async function buscarPerguntaSeguranca() {
+  const cpf = document.getElementById('esqueci-cpf').value.trim();
+  if (!cpf) { mostrarErro('Informe seu CPF', 'erro-esqueci'); return; }
+
+  const res = await api({ acao: 'recuperarSenhaPergunta', cpf });
+  if (res.erro) { mostrarErro(res.erro, 'erro-esqueci'); return; }
+
+  document.getElementById('esqueci-pergunta-texto').textContent = res.pergunta;
+  document.getElementById('esqueci-passo1').style.display = 'none';
+  document.getElementById('esqueci-passo2').style.display = '';
+  esconderErro('erro-esqueci');
+}
+
+async function confirmarRecuperacaoSenha() {
+  const cpf      = document.getElementById('esqueci-cpf').value.trim();
+  const resposta = document.getElementById('esqueci-resposta').value.trim();
+  const novaSenha  = document.getElementById('esqueci-nova-senha').value;
+  const novaSenha2 = document.getElementById('esqueci-nova-senha2').value;
+
+  if (!resposta) { mostrarErro('Preencha a resposta', 'erro-esqueci'); return; }
+  if (novaSenha.length < 4) { mostrarErro('A nova senha precisa ter pelo menos 4 caracteres', 'erro-esqueci'); return; }
+  if (novaSenha !== novaSenha2) { mostrarErro('As senhas não coincidem', 'erro-esqueci'); return; }
+
+  const res = await api({ acao: 'recuperarSenhaResetar', cpf, resposta, novaSenha });
+  if (res.erro) { mostrarErro(res.erro, 'erro-esqueci'); return; }
+
+  toast('Senha alterada! Faça login com a nova senha.', '✅');
+  document.getElementById('login-cpf').value = cpf;
+  document.getElementById('login-senha').value = '';
+  mostrarTela('login');
 }
 
 // ============================================================
@@ -1205,6 +1342,54 @@ function abrirOS(id) {
 function fecharModal() {
   document.getElementById('overlay-os').classList.remove('aberto');
   osAtual = null;
+}
+
+// ============================================================
+//  MEU CADASTRO (somente leitura)
+// ============================================================
+async function abrirMeuCadastro() {
+  const body = document.getElementById('modal-cadastro-body');
+  body.innerHTML = '<p style="color:var(--muted);">Carregando...</p>';
+  document.getElementById('overlay-cadastro').classList.add('aberto');
+
+  const res = await api({ acao: 'dadosCliente', cpf: clienteLogado.cpf });
+  if (res.erro) { body.innerHTML = '<p style="color:var(--red);">' + res.erro + '</p>'; return; }
+
+  const c = res.cliente;
+  const v = res.veiculo || {};
+  const campo = (label, valor) => `
+    <div style="margin-bottom:12px;">
+      <div style="font-size:0.72rem;color:var(--muted);">${label}</div>
+      <div style="font-weight:600;">${valor || '—'}</div>
+    </div>`;
+
+  body.innerHTML = `
+    <p style="font-size:0.78rem;color:var(--muted);margin-bottom:14px;">
+      Esses dados foram cadastrados pela oficina e não podem ser editados por aqui. Se algo estiver errado, peça ao mecânico pra corrigir.
+    </p>
+    <h3 style="margin:14px 0 8px;">Dados pessoais</h3>
+    ${campo('Nome', c.nome)}
+    ${campo('CPF', c.cpf)}
+    ${campo('Data de nascimento', c.nasc)}
+    ${campo('Telefone', c.tel)}
+    ${campo('E-mail', c.email)}
+    ${campo('Endereço', c.end)}
+    ${campo('Como conheceu a oficina', c.origem)}
+    ${v.placa ? `
+      <h3 style="margin:18px 0 8px;">Veículo</h3>
+      ${campo('Placa', v.placa)}
+      ${campo('Marca / Modelo', [v.marca, v.modelo].filter(Boolean).join(' / '))}
+      ${campo('Ano', v.ano)}
+      ${campo('Cor', v.cor)}
+      ${campo('Combustível', v.comb)}
+      ${campo('Última revisão', v.ultRev ? v.ultRev + ' km em ' + (v.ultRevData||'—') : '—')}
+      ${campo('Próxima revisão', v.proxRev ? v.proxRev + ' km até ' + (v.proxRevData||'—') : '—')}
+    ` : ''}
+  `;
+}
+
+function fecharModalCadastro() {
+  document.getElementById('overlay-cadastro').classList.remove('aberto');
 }
 
 function renderOSBody(os) {
