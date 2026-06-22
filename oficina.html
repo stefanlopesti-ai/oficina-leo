@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Oficina do Léo — Sistema v2</title>
+<title>OficinaAppSSJ — Painel do Mecânico</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 /* ============================================================
@@ -2074,7 +2074,7 @@ mark {
   <div class="sidebar-logo">
     <div class="logo-icon">🔧</div>
     <div class="logo-name">
-      Oficina do Léo
+      <span id="sidebarNomeOficina">Painel do Mecânico</span>
       <small>Painel do Mecânico</small>
     </div>
   </div>
@@ -2242,6 +2242,14 @@ mark {
           <button class="btn btn-accent" onclick="navigate('os');setTimeout(()=>openNovaOS(),100)">+ Nova OS</button>
         </div>
       </div>
+    </div>
+
+    <!-- COMO OS CLIENTES CONHECERAM A OFICINA -->
+    <div class="card" style="margin-top:16px">
+      <div class="card-head">
+        <span class="card-head-title">📊 Como os clientes conheceram a oficina</span>
+      </div>
+      <div id="dashOrigemChart"></div>
     </div>
   </div>
 
@@ -2569,6 +2577,13 @@ mark {
             <label>Endereço</label>
             <input type="text" id="cli-end" placeholder="Rua, número, bairro, cidade">
           </div>
+          <div class="form-group span2" id="boxAcessoCliente" style="display:none;border-top:1px solid var(--border);margin-top:6px;padding-top:14px;">
+            <label style="font-weight:700;">Acesso do cliente ao app</label>
+            <p style="color:var(--text-muted);font-size:13px;margin:4px 0 10px;">
+              Login: o CPF do cliente. Se ele esquecer a senha e a resposta de segurança, resete aqui — a senha volta pra <b>123456</b> e ele será obrigado a trocar no próximo login.
+            </p>
+            <button class="btn btn-outline" type="button" onclick="resetarSenhaClienteAtual()">🔑 Resetar senha do cliente</button>
+          </div>
         </div>
       </div>
 
@@ -2628,15 +2643,15 @@ mark {
           </div>
           <div class="form-group">
             <label>Última revisão (km)</label>
-            <input type="number" id="vei-ultrev" placeholder="Ex.: 40000 — km da última revisão">
+            <input type="number" id="vei-ultrev" placeholder="Ex.: 40000 — km da última revisão" oninput="calcularProximaRevisao()">
           </div>
           <div class="form-group">
             <label>Data da última revisão</label>
-            <input type="date" id="vei-ultrev-data">
+            <input type="date" id="vei-ultrev-data" onchange="calcularProximaRevisao()">
           </div>
           <div class="form-group">
             <label>Próxima revisão (km)</label>
-            <input type="number" id="vei-proxrev" placeholder="Ex.: 50000">
+            <input type="number" id="vei-proxrev" placeholder="Calculado automaticamente, mas você pode ajustar">
           </div>
           <div class="form-group">
             <label>Data da próxima revisão</label>
@@ -3095,7 +3110,7 @@ async function carregarOficinasAdmin() {
         ${res.oficinas.map(of => `
           <tr style="border-bottom:1px solid var(--border);">
             <td style="padding:8px;"><code style="background:var(--surface2);padding:2px 6px;border-radius:4px;">${of.id}</code></td>
-            <td style="padding:8px;">${of.nome}</td>
+            <td style="padding:8px;"><input type="text" style="width:140px;padding:4px;" value="${of.nome}" id="of-nome-${of.id}"></td>
             <td style="padding:8px;">
               <select id="of-plano-${of.id}" style="padding:4px;" onchange="aoMudarPlanoExistente('${of.id}')">
                 ${opcoesPlano}
@@ -3148,6 +3163,7 @@ async function excluirOficinaAdmin(id, nome) {
 async function salvarOficinaAdmin(id) {
   const limiteVal = document.getElementById('of-limCli-' + id).value;
   const dados = {
+    nome: document.getElementById('of-nome-' + id).value.trim(),
     plano: document.getElementById('of-plano-' + id).value,
     limiteClientes: limiteVal === '' ? '' : Number(limiteVal),
     limiteMecanicos: Number(document.getElementById('of-limMec-' + id).value),
@@ -3200,6 +3216,8 @@ async function carregarInfoOficina() {
   const res = await apiNuvem({ acao: 'infoOficina' });
   if (res.erro) return; // não bloqueia a tela por isso
   infoOficinaAtual = res;
+  const nomeEl = document.getElementById('sidebarNomeOficina');
+  if (nomeEl && res.oficina.nome) nomeEl.textContent = res.oficina.nome;
   renderAvisoLimitePlano();
 }
 
@@ -3458,9 +3476,37 @@ function maskPhone(el) {
 }
 
 /* -------- CLIENTES -------- */
+// Calcula automaticamente a próxima revisão (+10.000 km e +1 ano) a partir da última.
+// O valor calculado fica editável normalmente — só preenche, não trava o campo.
+function calcularProximaRevisao() {
+  const ultKm   = document.getElementById('vei-ultrev').value;
+  const ultData = document.getElementById('vei-ultrev-data').value;
+
+  if (ultKm) {
+    document.getElementById('vei-proxrev').value = Number(ultKm) + 10000;
+  }
+  if (ultData) {
+    const d = new Date(ultData + 'T00:00:00');
+    d.setFullYear(d.getFullYear() + 1);
+    document.getElementById('vei-proxrev-data').value = d.toISOString().slice(0, 10);
+  }
+}
+
+async function resetarSenhaClienteAtual() {
+  if (editingClienteIdx === null) return;
+  const c = clientes[editingClienteIdx];
+  if (!c.cpf) { toast('Esse cliente não tem CPF cadastrado', '⚠️'); return; }
+  if (!confirm(`Resetar a senha de ${c.nome} pra "123456"? Ele vai precisar trocar no próximo login.`)) return;
+
+  const res = await apiNuvem({ acao: 'mecanicoResetarSenhaCliente', cpf: c.cpf });
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  toast('Senha resetada pra 123456 ✅');
+}
+
 function openNovoCliente() {
   editingClienteIdx = null;
   document.getElementById('clienteModalTitle').textContent = 'Novo cliente';
+  document.getElementById('boxAcessoCliente').style.display = 'none';
   ['cli-nome','cli-cpf','cli-tel','cli-email','cli-end','cli-obs-cliente','cli-obs-interno'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('cli-nasc').value = '';
   ['vei-placa','vei-modelo','vei-cor','vei-chassi','vei-proxrev','vei-proxrev-data','vei-ultrev','vei-ultrev-data'].forEach(id => document.getElementById(id).value = '');
@@ -3593,6 +3639,16 @@ async function salvarCliente() {
   if (!nome || !tel) { toast('Preencha nome e telefone', '⚠️'); return; }
 
   const ehNovo = editingClienteIdx === null;
+  const cpfDigitado = document.getElementById('cli-cpf').value.replace(/\D/g, '');
+
+  if (cpfDigitado) {
+    const cpfDuplicado = clientes.some((c, i) => {
+      if (!ehNovo && i === editingClienteIdx) return false; // ignora o próprio cliente sendo editado
+      return (c.cpf || '').replace(/\D/g, '') === cpfDigitado;
+    });
+    if (cpfDuplicado) { toast('Já existe um cliente cadastrado com esse CPF', '⚠️'); return; }
+  }
+
   const cliente = {
     id:       ehNovo ? Date.now() : clientes[editingClienteIdx].id,
     nome,
@@ -3644,6 +3700,7 @@ function editarCliente(idx) {
   editingClienteIdx = idx;
   const c = clientes[idx];
   document.getElementById('clienteModalTitle').textContent = 'Editar cliente';
+  document.getElementById('boxAcessoCliente').style.display = c.cpf ? '' : 'none';
   document.getElementById('cli-nome').value  = c.nome || '';
   document.getElementById('cli-cpf').value   = c.cpf  || '';
   document.getElementById('cli-nasc').value  = c.nasc || '';
@@ -4132,6 +4189,37 @@ function refreshDashboard() {
       <span class="badge ${s.badge}">${os.status}</span>
     </div>`;
   }).join('');
+
+  renderOrigemChart();
+}
+
+// Gráfico simples (barras em CSS) de como os clientes conheceram a oficina.
+// Só conta quem já respondeu no primeiro acesso (origemConfirmada) — os demais
+// entram como "Ainda não informado" pra não distorcer os números.
+function renderOrigemChart() {
+  const cont = document.getElementById('dashOrigemChart');
+  if (!cont) return;
+
+  const contagem = {};
+  clientes.forEach(c => {
+    const chave = c.origemConfirmada && c.origem ? c.origem : 'Ainda não informado';
+    contagem[chave] = (contagem[chave] || 0) + 1;
+  });
+
+  const entradas = Object.entries(contagem).sort((a, b) => b[1] - a[1]);
+  if (!entradas.length) { cont.innerHTML = '<p style="color:var(--text-muted);">Sem clientes cadastrados ainda.</p>'; return; }
+
+  const max = Math.max(...entradas.map(e => e[1]));
+  cont.innerHTML = entradas.map(([origem, qtd]) => `
+    <div style="margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;">
+        <span>${origem}</span><span style="color:var(--text-muted);">${qtd}</span>
+      </div>
+      <div style="background:var(--surface2);border-radius:6px;height:10px;overflow:hidden;">
+        <div style="height:100%;border-radius:6px;background:var(--accent);width:${(qtd/max)*100}%;"></div>
+      </div>
+    </div>
+  `).join('');
 }
 
 /* -------- FINANCEIRO -------- */
@@ -4938,10 +5026,8 @@ navigate = function(page) {
   _navigateMobile(page);
   var mapped = ['dashboard','clientes','os','agendamento'].includes(page) ? page : null;
   if (mapped) setActiveMobileNav(mapped);
-   closeSidebar();
+  closeSidebar();
 };
 </script>
-<script src="patch_v3.js"></script>
-<script src="patch_v3b.js"></script>
 </body>
 </html>
