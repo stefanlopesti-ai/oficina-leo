@@ -4805,7 +4805,7 @@ navigate = function(page) {
   const titles = {
     dashboard:'Dashboard', clientes:'Clientes', os:'Ordens', veiculos:'Veículos',
     agendamento:'Agendamento', historico:'Histórico', financeiro:'Financeiro',
-    alertas:'Alertas', config:'Configurações'
+    alertas:'Alertas', plano:'Plano', equipe:'Equipe', config:'Configurações'
   };
   document.querySelectorAll('.nav-item').forEach(n => {
     const txt = n.textContent.trim();
@@ -4824,13 +4824,15 @@ navigate = function(page) {
   }
 
   if (page === 'dashboard')   refreshDashboard();
-  if (page === 'clientes')    renderClientes();
+  if (page === 'clientes')    { renderClientes(); carregarInfoOficina(); }
   if (page === 'os')          renderOS();
   if (page === 'veiculos')    renderVeiculos();
   if (page === 'historico')   renderHistorico();
   if (page === 'agendamento') { initCalendario(); }
   if (page === 'financeiro')  renderFinanceiro();
   if (page === 'alertas')     renderAlertas();
+  if (page === 'plano')       carregarPlano();
+  if (page === 'equipe')      carregarEquipe();
 };
 
 /* ---- OVERRIDE refreshDashboard para incluir alertas ---- */
