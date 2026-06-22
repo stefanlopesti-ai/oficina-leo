@@ -819,6 +819,7 @@ select option { background: var(--surface); }
 .os-card.status-andamento   { border-left-color: var(--accent); }
 .os-card.status-pronto      { border-left-color: var(--green); }
 .os-card.status-entregue    { border-left-color: var(--border); }
+.os-card.status-negado      { border-left-color: var(--red); }
 
 .os-card-num {
   font-size: 0.72rem;
@@ -2163,7 +2164,7 @@ mark {
   <!-- ===== DASHBOARD ===== -->
   <div class="page-content active" id="page-dashboard">
     <div class="dash-greeting">
-      <h1>Olá, <em>Léo</em> 👋</h1>
+      <h1>Olá, <em id="dashNomeMecanico">...</em> 👋</h1>
       <p id="dashDate">Carregando...</p>
     </div>
 
@@ -2300,6 +2301,7 @@ mark {
       <button class="status-filter" onclick="filtroStatus('Em andamento',this)">⚙️ Em andamento</button>
       <button class="status-filter" onclick="filtroStatus('Pronto',this)">🟢 Pronto</button>
       <button class="status-filter" onclick="filtroStatus('Entregue',this)">📦 Entregue</button>
+      <button class="status-filter" onclick="filtroStatus('Negado',this)">🚫 Negado</button>
     </div>
 
     <!-- LISTA VIEW -->
@@ -2779,6 +2781,7 @@ mark {
               <option selected>Em andamento</option>
               <option>Pronto</option>
               <option>Entregue</option>
+              <option>Negado</option>
             </select>
           </div>
           <div class="form-group">
@@ -3031,6 +3034,9 @@ function abrirApp() {
   document.getElementById('painelMaster').style.display = 'none';
   const nomeEl = document.getElementById('sidebarMecanicoNome');
   if (nomeEl && mecanicoLogado) nomeEl.textContent = '👋 ' + (mecanicoLogado.nome || mecanicoLogado.usuario);
+  // Atualiza o greeting do dashboard com o nome real do mecânico
+  const dashNome = document.getElementById('dashNomeMecanico');
+  if (dashNome && mecanicoLogado) dashNome.textContent = mecanicoLogado.nome || mecanicoLogado.usuario;
   carregarInfoOficina();
 }
 
@@ -4057,6 +4063,7 @@ const statusMap = {
   'Em andamento': { cls: 'status-andamento', badge: 'badge-yellow' },
   'Pronto':       { cls: 'status-pronto',    badge: 'badge-green' },
   'Entregue':     { cls: 'status-entregue',  badge: 'badge-gray' },
+  'Negado':       { cls: 'status-negado',    badge: 'badge-red' },
 };
 
 function renderOS(q = '') {
@@ -4536,13 +4543,14 @@ function toggleOsView() {
 }
 
 function renderKanban() {
-  const cols = ['Orçamento','Aprovado','Em andamento','Pronto','Entregue'];
+  const cols = ['Orçamento','Aprovado','Em andamento','Pronto','Entregue','Negado'];
   const colColors = {
     'Orçamento':    '#6B7280',
     'Aprovado':     '#2563EB',
     'Em andamento': '#F5C400',
     'Pronto':       '#10B981',
     'Entregue':     '#D1D5DB',
+    'Negado':       '#EF4444',
   };
 
   const wrap = document.getElementById('kanbanWrap');
@@ -4595,6 +4603,7 @@ function renderHistorico(q = '') {
     'Em andamento': { cls:'yellow', icon:'⚙️' },
     'Pronto':       { cls:'green',  icon:'🟢' },
     'Entregue':     { cls:'green',  icon:'📦' },
+    'Negado':       { cls:'red',    icon:'🚫' },
   };
 
   container.innerHTML = lista.map(os => {
@@ -4627,7 +4636,7 @@ function renderAlertas() {
   const hoje = new Date();
 
   // OS paradas há mais de 5 dias
-  ordens.filter(o => !['Entregue'].includes(o.status)).forEach(os => {
+  ordens.filter(o => !['Entregue','Negado'].includes(o.status)).forEach(os => {
     const criado = new Date(os.criadoEm);
     const dias = Math.floor((hoje - criado) / 86400000);
     if (dias >= 5) {
