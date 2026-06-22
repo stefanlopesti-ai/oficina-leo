@@ -902,7 +902,7 @@ async function confirmarAprovacao() {
     const res = await api({ acao: 'aprovarOrcamento', osId: osParaAprovar, cpf: clienteLogado.cpf });
     if (res.erro) { toast(res.erro, '⚠️'); return; }
     const os = ordens.find(o => String(o.id) === String(osParaAprovar));
-    if (os) { os.status = 'Aprovado'; os.aprovadoEm = new Date().toISOString(); }
+    if (os) { os.status = 'Em andamento'; os.aprovadoEm = new Date().toISOString(); }
     fecharConfirm(); fecharModal(); renderHome();
     toast('Orçamento aprovado! O mecânico já foi notificado. 🎉', '✅');
   } catch(e) {
