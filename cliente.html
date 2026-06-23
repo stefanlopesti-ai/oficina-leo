@@ -520,6 +520,37 @@ let osAtual        = null;
 let osParaAprovar  = null;
 let osParaRecusar  = null;
 
+// Canal de sincronização local (mesma máquina/navegador) entre cliente e mecânico
+let bcOficina = null;
+try {
+  bcOficina = new BroadcastChannel('oficina_leo_sync');
+  bcOficina.onmessage = (ev) => {
+    const m = ev.data || {};
+    if (m.tipo === 'statusOS' && clienteLogado) {
+      // mecânico mudou status — atualiza local
+      const os = ordens.find(o => String(o.id) === String(m.osId));
+      if (os && os.status !== m.status) {
+        const antigo = os.status;
+        os.status = m.status;
+        if (m.obs) os.obs = m.obs;
+        renderHome();
+        if (osAtual && String(osAtual.id) === String(m.osId)) {
+          osAtual.status = m.status;
+          document.getElementById('modal-os-body').innerHTML = renderOSBody(osAtual);
+        }
+        const msgMap = {
+          'Em andamento': '⚙️ Mecânico começou a trabalhar no seu veículo!',
+          'Pronto': '🚗 Seu veículo está PRONTO para retirada!',
+          'Entregue': '📦 Entrega concluída. Obrigado!'
+        };
+        if (msgMap[m.status]) toast(msgMap[m.status], '🔔');
+      }
+    }
+  };
+} catch(e) { /* navegador sem BroadcastChannel */ }
+// Polling leve para refletir mudanças do mecânico mesmo sem BroadcastChannel
+setInterval(() => { if (clienteLogado) carregarOrdens(true); }, 20000);
+
 // ============================================================
 //  INIT
 // ============================================================
@@ -664,7 +695,13 @@ function renderHome() {
   const conteudo = document.getElementById('home-conteudo');
   if (!ordens.length) { conteudo.innerHTML = `<div class="empty"><div class="empty-icon">📋</div><h3>Nenhuma OS ainda</h3><p>Quando o mecânico abrir uma ordem de serviço para você, ela aparecerá aqui.</p></div>`; return; }
   const pendentes = ordens.filter(o => o.status==='Orçamento');
+  const prontas   = ordens.filter(o => o.status==='Pronto');
   let html = '';
+  if (prontas.length) {
+    html += '<div>';
+    prontas.forEach(os => { html += `<div class="banner-aprovacao" style="background:var(--green-bg);border-color:var(--green);" onclick="abrirOS('${os.id}')"><div class="banner-icon">🚗</div><div class="banner-text"><strong style="color:#065F46">Veículo pronto para retirada!</strong><span style="color:#059669">${os.veiculoModelo} · ${fmt(os.total)}</span></div><div class="banner-arrow" style="color:#059669">→</div></div>`; });
+    html += '</div>';
+  }
   if (pendentes.length) {
     html += '<div>';
     pendentes.forEach(os => { html += `<div class="banner-aprovacao" onclick="abrirOS('${os.id}')"><div class="banner-icon">📄</div><div class="banner-text"><strong>Orçamento aguardando sua aprovação</strong><span>${os.veiculoModelo} · ${fmt(os.total)}</span></div><div class="banner-arrow">→</div></div>`; });
@@ -680,13 +717,26 @@ function renderHome() {
 // ============================================================
 //  CARREGAR ORDENS
 // ============================================================
-async function carregarOrdens() {
-  document.getElementById('home-conteudo').innerHTML = `<div class="loading-wrap"><div class="spinner"></div><span style="font-size:0.82rem;color:var(--muted)">Carregando suas OS...</span></div>`;
+async function carregarOrdens(silencioso) {
+  if (!silencioso) document.getElementById('home-conteudo').innerHTML = `<div class="loading-wrap"><div class="spinner"></div><span style="font-size:0.82rem;color:var(--muted)">Carregando suas OS...</span></div>`;
   try {
     const res = await api({ acao: 'ordensDoCliente', cpf: clienteLogado.cpf });
-    if (res.erro) { toast(res.erro, '⚠️'); return; }
-    ordens = res.ordens || []; renderHome();
+    if (res.erro) { if (!silencioso) toast(res.erro, '⚠️'); return; }
+    const novas = res.ordens || [];
+    // detectar mudanças de status p/ notificar
+    if (silencioso && ordens.length) {
+      novas.forEach(n => {
+        const ant = ordens.find(o => String(o.id)===String(n.id));
+        if (ant && ant.status !== n.status) {
+          const msgMap = { 'Em andamento':'⚙️ Mecânico começou a trabalhar no seu veículo!', 'Pronto':'🚗 Seu veículo está PRONTO para retirada!', 'Entregue':'📦 Entrega concluída. Obrigado!' };
+          if (msgMap[n.status]) toast(msgMap[n.status], '🔔');
+        }
+      });
+    }
+    ordens = novas; renderHome();
+    if (osAtual) { const upd = ordens.find(o => String(o.id)===String(osAtual.id)); if (upd) { osAtual = upd; const body = document.getElementById('modal-os-body'); if (body && document.getElementById('overlay-os').classList.contains('aberto')) body.innerHTML = renderOSBody(osAtual); } }
   } catch(e) {
+    if (silencioso) return;
     toast('Erro ao carregar ordens', '⚠️');
     document.getElementById('home-conteudo').innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><h3>Erro de conexão</h3><p>Não foi possível carregar. Verifique sua internet.</p><button class="btn-primary" style="max-width:200px;margin:16px auto 0" onclick="carregarOrdens()">Tentar novamente</button></div>`;
   }
@@ -726,7 +776,7 @@ function renderOSBody(os) {
   if (os.status === 'Negado') {
     progressHtml = `<div style="display:flex;align-items:center;gap:12px;background:var(--red-bg);border:1px solid var(--red);border-radius:12px;padding:14px 16px;margin:16px 0 24px;"><span style="font-size:1.5rem;">🚫</span><div><div style="font-weight:800;color:#991B1B;font-size:0.875rem;">Orçamento recusado</div><div style="font-size:0.75rem;color:var(--red);">O mecânico foi notificado da recusa.</div></div></div>`;
   } else {
-    const steps = ['Orçamento','Em andamento','Pronto','Entregue']; const stepIdx = steps.indexOf(os.status);
+    const steps = ['Orçamento','Aprovado','Em andamento','Pronto','Entregue']; const stepIdx = steps.indexOf(os.status);
     progressHtml = '<div class="status-progress">';
     steps.forEach((s,i) => { const cls = i<stepIdx?'feito':(i===stepIdx?'atual':''); const dot = i<stepIdx?'✓':(i===stepIdx?'●':''); progressHtml += `<div class="sp-step ${cls}"><div class="sp-dot">${dot}</div><div class="sp-lbl">${s}</div></div>`; });
     progressHtml += '</div>';
@@ -739,9 +789,15 @@ function renderOSBody(os) {
   }
   let acaoHtml = '';
   if (os.status === 'Orçamento') {
-    acaoHtml = `<div style="margin-top:20px"><button class="btn-aprovar" onclick="pedirConfirmacao('${os.id}')">✅ Aprovar este orçamento</button><button class="btn-recusar" onclick="pedirRecusa('${os.id}')">🚫 Recusar este orçamento</button><p style="font-size:0.72rem;color:var(--muted);text-align:center;margin-top:8px">Ao aprovar, o mecânico iniciará o serviço imediatamente</p></div>`;
-  } else if (['Aprovado','Em andamento','Pronto','Entregue'].includes(os.status)) {
-    acaoHtml = `<div class="aprovado-badge" style="margin-top:16px"><div class="ab-icon">✅</div><div class="ab-text"><strong>Serviço aprovado</strong><span>${os.aprovadoEm ? fmtData(os.aprovadoEm) : ''}</span></div></div>`;
+    acaoHtml = `<div style="margin-top:20px"><button class="btn-aprovar" onclick="pedirConfirmacao('${os.id}')">✅ Aprovar este orçamento</button><button class="btn-recusar" onclick="pedirRecusa('${os.id}')">🚫 Recusar este orçamento</button><p style="font-size:0.72rem;color:var(--muted);text-align:center;margin-top:8px">Ao aprovar, o mecânico será notificado e iniciará o serviço</p></div>`;
+  } else if (os.status === 'Aprovado') {
+    acaoHtml = `<div class="aprovado-badge" style="margin-top:16px"><div class="ab-icon">✅</div><div class="ab-text"><strong>Orçamento aprovado</strong><span>Aguardando o mecânico iniciar o serviço${os.aprovadoEm ? ' · '+fmtData(os.aprovadoEm) : ''}</span></div></div>`;
+  } else if (os.status === 'Em andamento') {
+    acaoHtml = `<div class="aprovado-badge" style="margin-top:16px;background:var(--amber-bg);border-color:var(--amber);"><div class="ab-icon">⚙️</div><div class="ab-text"><strong style="color:#92400E">Serviço em andamento</strong><span style="color:#B45309">O mecânico já começou a trabalhar no seu veículo</span></div></div>`;
+  } else if (os.status === 'Pronto') {
+    acaoHtml = `<div class="aprovado-badge" style="margin-top:16px;background:var(--green-bg);border-color:var(--green);"><div class="ab-icon">🚗</div><div class="ab-text"><strong style="color:#065F46">Veículo PRONTO para retirada!</strong><span style="color:#059669">Pode vir buscar o seu carro. Total: ${fmt(os.total)}</span></div></div>`;
+  } else if (os.status === 'Entregue') {
+    acaoHtml = `<div class="aprovado-badge" style="margin-top:16px"><div class="ab-icon">📦</div><div class="ab-text"><strong>Serviço entregue</strong><span>Obrigado pela preferência!</span></div></div>`;
   }
   const obsHtml = os.obs ? `<div class="secao-titulo" style="margin-top:16px">Observações do mecânico</div><div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:0.82rem;color:var(--text);line-height:1.5">${os.obs}</div>` : '';
   return `${progressHtml}<div class="secao-titulo">Informações</div><div class="info-row"><span class="info-lbl">Veículo</span><span class="info-val">${os.veiculoModelo||'—'}</span></div><div class="info-row"><span class="info-lbl">Placa</span><span class="info-val">${os.veiculoPlaca||'—'}</span></div><div class="info-row"><span class="info-lbl">Problema relatado</span><span class="info-val" style="max-width:60%;text-align:right">${os.problema||'—'}</span></div><div class="info-row"><span class="info-lbl">Abertura</span><span class="info-val">${fmtData(os.criadoEm)}</span></div>${itensHtml}<div class="os-total"><span class="total-lbl">Total</span><span class="total-val">${fmt(os.total)}</span></div>${obsHtml}${acaoHtml}`;
@@ -760,7 +816,8 @@ async function confirmarAprovacao() {
     const res = await api({ acao: 'aprovarOrcamento', osId: osParaAprovar, cpf: clienteLogado.cpf });
     if (res.erro) { toast(res.erro, '⚠️'); return; }
     const os = ordens.find(o => String(o.id)===String(osParaAprovar));
-    if (os) { os.status='Em andamento'; os.aprovadoEm=new Date().toISOString(); }
+    if (os) { os.status='Aprovado'; os.aprovadoEm=new Date().toISOString(); }
+    try { bcOficina && bcOficina.postMessage({ tipo:'statusOS', osId: osParaAprovar, status:'Aprovado', cpf: clienteLogado.cpf }); } catch(e){}
     fecharConfirm(); fecharModal(); renderHome();
     toast('Orçamento aprovado! O mecânico já foi notificado. 🎉', '✅');
   } catch(e) { toast('Erro ao aprovar. Tente novamente.', '⚠️'); }
@@ -781,6 +838,7 @@ async function confirmarRecusa() {
     if (res.erro) { toast(res.erro, '⚠️'); return; }
     const os = ordens.find(o => String(o.id)===String(osParaRecusar));
     if (os) { os.status='Negado'; os.negadoEm=new Date().toISOString(); }
+    try { bcOficina && bcOficina.postMessage({ tipo:'statusOS', osId: osParaRecusar, status:'Negado', cpf: clienteLogado.cpf }); } catch(e){}
     fecharRecusar(); fecharModal(); renderHome();
     toast('Orçamento recusado. O mecânico foi notificado.', '🚫');
   } catch(e) { toast('Erro ao recusar. Tente novamente.', '⚠️'); }
