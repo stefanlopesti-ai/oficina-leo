@@ -1373,7 +1373,7 @@ function salvarOS() {
   localStorage.setItem('oleo_os', JSON.stringify(ordens)); localStorage.setItem('oleo_osCounter', osCounter);
   enviarOrdemNuvem({ id: os.id, clienteId: os.clienteId, clienteNome: os.clienteNome, clienteCpf: cliente.cpf||'', clienteTel: os.clienteTel, veiculoId: cliente.veiculo?.id||'', veiculoPlaca: cliente.veiculo?.placa||'', veiculoModelo: os.veiculo||'', problema: os.descricao||'', status: os.status, total: os.total, criadoEm: os.criadoEm, obs: os.obsAdd||'', itens: os.items.map(i => ({ tipo: i.tipo==='Serviço'?'servico':'peca', desc: i.desc, qtd: i.qty, valorUnit: i.val, valorTotal: i.total })) });
 
-  // Notifica o app do cliente (mesma máquina) em tempo real
+ // Notifica o app do cliente (mesma máquina) em tempo real
   bcPushStatusMec(os.id, os.status);
 
   const novaOS = editingOsIdx === null;
@@ -1401,40 +1401,7 @@ function salvarOS() {
   } else {
     toast(novaOS ? 'OS criada com sucesso!' : 'OS atualizada!');
   }
-  // Fluxo: status mudou para "Entregue" → abre modal de encerramento (pagamento + assinaturas + PDF)
-  else if (mudouStatus && os.status === 'Entregue') {
-    renderOS(); refreshDashboard();
-    abrirEncerramento(os.id);
-    return; // não fecha overlayOS — abrirEncerramento gerencia o fluxo
-  } else {
-    toast(novaOS ? 'OS criada com sucesso!' : 'OS atualizada!');
-  }
-
-  closeModal('overlayOS'); renderOS(); refreshDashboard();
 }
-
-function filtroStatus(status, btn) { currentOsStatusFilter = status; document.querySelectorAll('.status-filter').forEach(b => b.classList.remove('active')); btn.classList.add('active'); renderOS(); }
-function filtrarOS(q) { renderOS(q); }
-const statusMap = { 'Orçamento':{ cls:'status-orcamento', badge:'badge-gray' }, 'Aprovado':{ cls:'status-aprovado', badge:'badge-blue' }, 'Em andamento':{ cls:'status-andamento', badge:'badge-yellow' }, 'Pronto':{ cls:'status-pronto', badge:'badge-green' }, 'Entregue':{ cls:'status-entregue', badge:'badge-gray' }, 'Negado':{ cls:'status-negado', badge:'badge-red' } };
-function renderOS(q) {
-  q = q || '';
-  const container = document.getElementById('osCards'); let lista = [...ordens].reverse();
-  if (currentOsStatusFilter !== 'todos') lista = lista.filter(o => o.status === currentOsStatusFilter);
-  if (q) lista = lista.filter(o => o.clienteNome.toLowerCase().includes(q.toLowerCase()) || (o.veiculoObj?.modelo||'').toLowerCase().includes(q.toLowerCase()));
-  if (!lista.length) { container.innerHTML = `<div class="empty-state" style="background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);padding:60px"><div class="empty-icon">📋</div><h3>Nenhuma OS encontrada</h3><p>${q||currentOsStatusFilter!=='todos'?'Tente outros filtros':'Crie a primeira ordem de serviço'}</p>${!q&&currentOsStatusFilter==='todos'?'<button class="btn btn-accent" onclick="openNovaOS()">+ Nova OS</button>':''}</div>`; return; }
-  container.innerHTML = lista.map(os => { const s = statusMap[os.status]||{cls:'',badge:'badge-gray'}; const v = os.veiculoObj; const vStr = v?`${v.marca} ${v.modelo} — ${v.placa}`:os.veiculo; return `<div class="os-card ${s.cls}" onclick="editarOS('${os.id}')"><span class="os-card-num">#${os.id}</span><div class="os-card-body"><div class="os-card-client">${os.clienteNome}</div><div class="os-card-detail">${vStr} · ${os.descricao?os.descricao.slice(0,60)+'...':'Sem descrição'}</div></div><div class="os-card-right"><span class="badge ${s.badge}">${os.status}</span><span class="os-card-value">R$ ${(os.total||0).toFixed(2).replace('.',',')}</span></div></div>`; }).join('');
-}
-function editarOS(id) {
-  const idx = ordens.findIndex(o => String(o.id) === String(id)); if (idx < 0) return;
-  editingOsIdx = idx; const os = ordens[idx];
-  document.getElementById('osModalTitle').textContent = `OS #${os.id}`; populateClienteSelect();
-  document.getElementById('os-cliente').value = os.clienteId; onClienteChange(); document.getElementById('os-veiculo').value = os.veiculo; document.getElementById('os-status').value = os.status; document.getElementById('os-data-entrada').value = os.dataEntrada||''; document.getElementById('os-previsao').value = os.previsao||''; document.getElementById('os-km').value = os.km||''; document.getElementById('os-descricao').value = os.descricao||''; document.getElementById('os-diagnostico').value = os.diagnostico||''; document.getElementById('os-obs-add').value = os.obsAdd||'';
-  const resEl = document.getElementById('ia-diagnostico-resultado'); if (resEl) { resEl.style.display = 'none'; resEl.textContent = ''; }
-  document.getElementById('itemsTbody').innerHTML = '';
-  (os.items||[]).forEach(item => { const tr = document.createElement('tr'); tr.innerHTML = `<td><input type="text" value="${item.desc}"></td><td><select style="padding:6px 4px;font-size:0.82rem"><option>Serviço</option><option>Peça</option></select></td><td><input type="number" value="${item.qty}" min="1" oninput="calcTotal()" style="width:60px"></td><td><input type="number" value="${item.val}" step="0.01" oninput="calcTotal()"></td><td><button class="remove-row" onclick="this.closest('tr').remove();calcTotal()">✕</button></td>`; tr.querySelector('select').value = item.tipo; document.getElementById('itemsTbody').appendChild(tr); });
-  calcTotal(); resetTab('os','dados'); openModal('overlayOS');
-}
-
 /* -------- PDF -------- */
 function gerarPDF() {
   const clienteId = document.getElementById('os-cliente').value; const cliente = clientes.find(c => String(c.id) === String(clienteId));
