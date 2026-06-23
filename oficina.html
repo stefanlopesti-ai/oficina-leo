@@ -1604,7 +1604,108 @@ async function iaResumoHistorico(btn) {
   if (res.erro) { iaBox.style.background = 'var(--red-bg)'; iaBox.style.borderColor = 'var(--red)'; iaBox.textContent = '⚠️ ' + res.erro; return; }
   iaBox.innerHTML = '<strong style="display:block;margin-bottom:8px;">🤖 Resumo do histórico (IA)</strong>' + res.resposta.replace(/\n/g,'<br>');
 }
+/* -------- STATUS MAP (faltava) -------- */
+const statusMap = {
+  'Orçamento':    { badge: 'badge-gray'  },
+  'Aprovado':     { badge: 'badge-blue'  },
+  'Em andamento': { badge: 'badge-amber' },
+  'Pronto':       { badge: 'badge-green' },
+  'Entregue':     { badge: 'badge-gray'  },
+  'Negado':       { badge: 'badge-red'   },
+};
 
+/* -------- RENDER OS (faltava) -------- */
+function renderOS(q) {
+  q = (q || '').toLowerCase();
+  const container = document.getElementById('osCards');
+  let lista = [...ordens].sort((a, b) => new Date(b.criadoEm) - new Date(a.criadoEm));
+  if (currentOsStatusFilter !== 'todos')
+    lista = lista.filter(o => o.status === currentOsStatusFilter);
+  if (q)
+    lista = lista.filter(o =>
+      o.clienteNome.toLowerCase().includes(q) ||
+      (o.veiculoObj?.modelo || '').toLowerCase().includes(q) ||
+      (o.veiculo || '').toLowerCase().includes(q)
+    );
+  if (!lista.length) {
+    container.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">📋</div>
+      <h3>Nenhuma OS encontrada</h3>
+      <p>${q || currentOsStatusFilter !== 'todos' ? 'Tente outra busca ou filtro' : 'Crie a primeira ordem de serviço'}</p>
+      <button class="btn btn-accent" onclick="openNovaOS()">+ Nova OS</button>
+    </div>`;
+    return;
+  }
+  container.innerHTML = lista.map(os => {
+    const s = statusMap[os.status] || { badge: 'badge-gray' };
+    const statusClass = {
+      'Orçamento': 'status-orcamento', 'Aprovado': 'status-aprovado',
+      'Em andamento': 'status-andamento', 'Pronto': 'status-pronto',
+      'Entregue': 'status-entregue', 'Negado': 'status-negado'
+    }[os.status] || '';
+    const v = os.veiculoObj;
+    const vStr = v ? `${v.marca} ${v.modelo} · ${v.placa}` : (os.veiculo || '—');
+    return `<div class="os-card ${statusClass}" onclick="editarOS('${os.id}')">
+      <span class="os-card-num">#${String(os.id).slice(-6)}</span>
+      <div class="os-card-body">
+        <div class="os-card-client">${os.clienteNome}</div>
+        <div class="os-card-detail">${vStr}</div>
+      </div>
+      <div class="os-card-right">
+        <span class="os-card-value">R$ ${(os.total || 0).toFixed(2).replace('.', ',')}</span>
+        <span class="badge ${s.badge}">${os.status}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* -------- EDITAR OS -------- */
+function editarOS(id) {
+  const idx = ordens.findIndex(o => String(o.id) === String(id));
+  if (idx < 0) return;
+  editingOsIdx = idx;
+  const os = ordens[idx];
+  document.getElementById('osModalTitle').textContent = 'Editar OS #' + String(os.id).slice(-6);
+  populateClienteSelect();
+  document.getElementById('os-cliente').value = os.clienteId;
+  onClienteChange();
+  document.getElementById('os-veiculo').value = os.veiculo || '';
+  document.getElementById('os-status').value = os.status || 'Em andamento';
+  document.getElementById('os-data-entrada').value = os.dataEntrada || '';
+  document.getElementById('os-previsao').value = os.previsao || '';
+  document.getElementById('os-km').value = os.km || '';
+  document.getElementById('os-descricao').value = os.descricao || '';
+  document.getElementById('os-diagnostico').value = os.diagnostico || '';
+  document.getElementById('os-obs-add').value = os.obsAdd || '';
+  const res = document.getElementById('ia-diagnostico-resultado');
+  if (res) { res.style.display = 'none'; res.textContent = ''; }
+  const tbody = document.getElementById('itemsTbody');
+  tbody.innerHTML = '';
+  (os.items || []).forEach(item => {
+    addItem(item.tipo || 'Serviço');
+    const rows = tbody.querySelectorAll('tr');
+    const last = rows[rows.length - 1];
+    last.querySelector('input[type="text"]').value = item.desc || '';
+    last.querySelector('select').value = item.tipo || 'Serviço';
+    const nums = last.querySelectorAll('input[type="number"]');
+    nums[0].value = item.qty || 1;
+    nums[1].value = item.val || 0;
+  });
+  calcTotal();
+  resetTab('os', 'dados');
+  openModal('overlayOS');
+}
+
+/* -------- FILTRO STATUS -------- */
+function filtroStatus(status, btn) {
+  currentOsStatusFilter = status;
+  document.querySelectorAll('.status-filter').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderOS();
+}
+
+/* -------- FILTRAR OS -------- */
+function filtrarOS(q) { renderOS(q); }
 /* -------- INIT -------- */
 (function init() {
   if (MODO_MASTER) { document.getElementById('loginMecanicoBox').style.display = 'none'; document.getElementById('loginAdminBox').style.display = ''; if (adminLogado) abrirPainelMaster(); }
