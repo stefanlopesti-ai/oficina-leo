@@ -1380,7 +1380,7 @@ function salvarOS() {
   const mudouStatus = statusAntigo !== null && statusAntigo !== os.status;
 
   // Fluxo: nova OS em Orçamento → manda orçamento por WhatsApp
-  else if (novaOS && os.status === 'Orçamento') {
+  if (novaOS && os.status === 'Orçamento') {
     toast('OS marcada como Orçamento! Enviando orçamento por WhatsApp...');
     try { enviarWhatsApp(); } catch(e) { console.error(e); }
   }
