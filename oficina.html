@@ -482,19 +482,19 @@ mark{background:var(--accent-light);color:var(--text);border-radius:2px;padding:
   </div>
   <div class="sidebar-nav">
     <span class="nav-group-label">Principal</span>
-    <button class="nav-item active" onclick="navigate('dashboard')"><span class="nav-icon">🏠</span> Dashboard</button>
-    <button class="nav-item" onclick="navigate('clientes')"><span class="nav-icon">👤</span> Clientes</button>
-    <button class="nav-item" onclick="navigate('os')"><span class="nav-icon">📋</span> Ordens de Serviço</button>
+    <button class="nav-item active" onclick="navigate('dashboard')" data-page="dashboard"><span class="nav-icon">🏠</span> Dashboard</button>
+    <button class="nav-item" onclick="navigate('clientes')" data-page="clientes"><span class="nav-icon">👤</span> Clientes</button>
+    <button class="nav-item" onclick="navigate('os')" data-page="os"><span class="nav-icon">📋</span> Ordens de Serviço</button>
     <span class="nav-group-label">Gestão</span>
-    <button class="nav-item" onclick="navigate('veiculos')"><span class="nav-icon">🚗</span> Veículos</button>
-    <button class="nav-item" onclick="navigate('agendamento')"><span class="nav-icon">📅</span> Agendamento</button>
-    <button class="nav-item" onclick="navigate('historico')"><span class="nav-icon">🕓</span> Histórico</button>
-    <button class="nav-item" onclick="navigate('financeiro')"><span class="nav-icon">💰</span> Financeiro</button>
-    <button class="nav-item" onclick="navigate('alertas')" id="nav-alertas"><span class="nav-icon">🔔</span> Alertas<span class="nav-badge" id="alertas-badge" style="display:none">0</span></button>
+    <button class="nav-item" onclick="navigate('veiculos')" data-page="veiculos"><span class="nav-icon">🚗</span> Veículos</button>
+    <button class="nav-item" onclick="navigate('agendamento')" data-page="agendamento"><span class="nav-icon">📅</span> Agendamento</button>
+    <button class="nav-item" onclick="navigate('historico')" data-page="historico"><span class="nav-icon">🕓</span> Histórico</button>
+    <button class="nav-item" onclick="navigate('financeiro')" data-page="financeiro"><span class="nav-icon">💰</span> Financeiro</button>
+    <button class="nav-item" onclick="navigate('alertas')" data-page="alertas" id="nav-alertas"><span class="nav-icon">🔔</span> Alertas<span class="nav-badge" id="alertas-badge" style="display:none">0</span></button>
     <span class="nav-group-label">Sistema</span>
-    <button class="nav-item" onclick="navigate('plano')"><span class="nav-icon">💎</span> Plano</button>
-    <button class="nav-item" onclick="navigate('equipe')"><span class="nav-icon">🧑‍🔧</span> Equipe</button>
-    <button class="nav-item" onclick="navigate('config')"><span class="nav-icon">⚙️</span> Configurações</button>
+    <button class="nav-item" onclick="navigate('plano')" data-page="plano"><span class="nav-icon">💎</span> Plano</button>
+    <button class="nav-item" onclick="navigate('equipe')" data-page="equipe"><span class="nav-icon">🧑‍🔧</span> Equipe</button>
+    <button class="nav-item" onclick="navigate('config')" data-page="config"><span class="nav-icon">⚙️</span> Configurações</button>
   </div>
   <div class="sidebar-footer">
     <div id="sidebarMecanicoNome" style="font-weight:600;color:var(--text);margin-bottom:4px;"></div>
@@ -971,7 +971,7 @@ function iniciarPollingOS() {
       ordens = res.ordens; localStorage.setItem('oleo_os', JSON.stringify(ordens));
       alteradas.forEach(os => {
         const icone = os.status === 'Em andamento' ? '✅' : (os.status === 'Negado' ? '🚫' : '🔔');
-        toast(`${icone} OS #${String(os.id).slice(-6)} — cliente ${os.status === 'Em andamento' ? 'APROVOU' : (os.status === 'Negado' ? 'RECUSOU' : 'atualizou para: ' + os.status)} o orçamento`, 3500);
+        toast(`${icone} OS #${String(os.id).slice(-6)} — cliente ${os.status === 'Em andamento' ? 'APROVOU' : (os.status === 'Negado' ? 'RECUSOU' : 'atualizou para: ' + os.status)} o orçamento`);
       });
       if (alteradas.length > 0) { renderOS(); refreshDashboard && refreshDashboard(); }
     } catch(e) {}
@@ -983,13 +983,21 @@ async function fazerLoginMecanico() {
   const usuario = document.getElementById('lm-usuario').value.trim();
   const senha   = document.getElementById('lm-senha').value;
   const erroEl  = document.getElementById('lm-erro');
+  const btn     = document.querySelector('#loginMecanicoBox button.btn-accent');
   erroEl.style.display = 'none';
   if (!usuario || !senha) { erroEl.textContent = 'Preencha usuário e senha'; erroEl.style.display = 'block'; return; }
-  const res = await apiNuvem({ acao: 'loginMecanico', usuario, senha });
-  if (res.erro) { erroEl.textContent = res.erro; erroEl.style.display = 'block'; return; }
-  mecanicoLogado = res.mecanico; localStorage.setItem('oleo_mecanico', JSON.stringify(mecanicoLogado)); abrirApp();
+  if (btn && btn.disabled) return;
+  let btnLabel = '';
+  if (btn) { btnLabel = btn.textContent; btn.disabled = true; btn.textContent = 'Entrando...'; }
+  try {
+    const res = await apiNuvem({ acao: 'loginMecanico', usuario, senha });
+    if (res.erro) { erroEl.textContent = res.erro; erroEl.style.display = 'block'; return; }
+    mecanicoLogado = res.mecanico; localStorage.setItem('oleo_mecanico', JSON.stringify(mecanicoLogado)); abrirApp();
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = btnLabel || 'Entrar'; }
+  }
 }
-function logoutMecanico() { localStorage.removeItem('oleo_mecanico'); location.reload(); }
+function logoutMecanico() { pararPollingOS(); localStorage.removeItem('oleo_mecanico'); location.reload(); }
 
 function abrirPainelMaster() {
   document.getElementById('authGate').style.display = 'none';
@@ -1128,7 +1136,7 @@ function navigate(page) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   const el = document.getElementById('page-' + page); if (el) el.classList.add('active');
   const titles = { dashboard:'Dashboard', clientes:'Clientes', os:'Ordens', veiculos:'Veículos', agendamento:'Agendamento', historico:'Histórico', financeiro:'Financeiro', alertas:'Alertas', plano:'Plano', equipe:'Equipe', config:'Configurações' };
-  document.querySelectorAll('.nav-item').forEach(n => { if (n.textContent.trim().includes(titles[page]?.split(' ')[0]||'___')) n.classList.add('active'); });
+  document.querySelectorAll('.nav-item[data-page="'+page+'"]').forEach(n => n.classList.add('active'));
   document.getElementById('pageTitle').textContent = pageTitles[page] || page;
   const fab = document.getElementById('fabHome'); if (fab) fab.style.display = page === 'dashboard' ? 'none' : 'flex';
   if (page === 'dashboard')   refreshDashboard();
@@ -1276,7 +1284,7 @@ function openNovaOS() {
   calcTotal(); populateClienteSelect(); resetTab('os','dados'); openModal('overlayOS');
 }
 function populateClienteSelect() { const sel = document.getElementById('os-cliente'); sel.innerHTML = '<option value="">Selecione o cliente...</option>' + clientes.map(c => `<option value="${c.id}">${c.nome}</option>`).join(''); document.getElementById('os-veiculo').innerHTML = '<option>Selecione primeiro o cliente</option>'; }
-function onClienteChange() { const id = parseInt(document.getElementById('os-cliente').value); const c = clientes.find(x => x.id === id); const sel = document.getElementById('os-veiculo'); if (c && c.veiculo && c.veiculo.placa) { sel.innerHTML = `<option value="${c.veiculo.placa}">${c.veiculo.marca} ${c.veiculo.modelo} — ${c.veiculo.placa}</option>`; if (c.veiculo.km) document.getElementById('os-km').value = c.veiculo.km; } else { sel.innerHTML = '<option>Nenhum veículo cadastrado</option>'; } }
+function onClienteChange() { const id = document.getElementById('os-cliente').value; const c = clientes.find(x => String(x.id) === String(id)); const sel = document.getElementById('os-veiculo'); if (c && c.veiculo && c.veiculo.placa) { sel.innerHTML = `<option value="${c.veiculo.placa}">${c.veiculo.marca} ${c.veiculo.modelo} — ${c.veiculo.placa}</option>`; if (c.veiculo.km) document.getElementById('os-km').value = c.veiculo.km; } else { sel.innerHTML = '<option>Nenhum veículo cadastrado</option>'; } }
 function addItem(tipo) {
   const tr = document.createElement('tr');
   tr.innerHTML = `<td><input type="text" placeholder="Descrição do ${tipo.toLowerCase()}..."></td><td><select style="padding:6px 4px;font-size:0.82rem"><option>Serviço</option><option>Peça</option></select></td><td><input type="number" value="1" min="1" oninput="calcTotal()" style="width:60px"></td><td><input type="number" placeholder="0,00" step="0.01" oninput="calcTotal()"></td><td><button class="remove-row" onclick="this.closest('tr').remove();calcTotal()">✕</button></td>`;
@@ -1285,7 +1293,7 @@ function addItem(tipo) {
 function calcTotal() { let total = 0; document.querySelectorAll('#itemsTbody tr').forEach(tr => { const inputs = tr.querySelectorAll('input[type="number"]'); if (inputs.length >= 2) { const qty = parseFloat(inputs[0].value)||1; const val = parseFloat(inputs[1].value)||0; total += qty * val; } }); document.getElementById('osTotal').textContent = 'R$ ' + total.toFixed(2).replace('.',','); return total; }
 
 function salvarOS() {
-  const clienteId = parseInt(document.getElementById('os-cliente').value); const cliente = clientes.find(c => c.id === clienteId);
+  const clienteId = document.getElementById('os-cliente').value; const cliente = clientes.find(c => String(c.id) === String(clienteId));
   if (!cliente) { toast('Selecione um cliente', '⚠️'); return; }
   const items = []; document.querySelectorAll('#itemsTbody tr').forEach(tr => { const desc = tr.querySelector('input[type="text"]')?.value||''; const tipo = tr.querySelector('select')?.value||'Serviço'; const inputs = tr.querySelectorAll('input[type="number"]'); const qty = parseFloat(inputs[0]?.value)||1; const val = parseFloat(inputs[1]?.value)||0; if (desc) items.push({ desc, tipo, qty, val, total: qty*val }); });
   const os = { id: editingOsIdx!==null?ordens[editingOsIdx].id:(osCounter++), clienteId, clienteNome: cliente.nome, clienteTel: cliente.tel, veiculo: document.getElementById('os-veiculo').value, veiculoObj: cliente.veiculo, status: document.getElementById('os-status').value, dataEntrada: document.getElementById('os-data-entrada').value, previsao: document.getElementById('os-previsao').value, km: document.getElementById('os-km').value, descricao: document.getElementById('os-descricao').value, diagnostico: document.getElementById('os-diagnostico').value, obsAdd: document.getElementById('os-obs-add').value, items, total: calcTotal(), criadoEm: editingOsIdx!==null?ordens[editingOsIdx].criadoEm:new Date().toISOString() };
@@ -1319,7 +1327,7 @@ function editarOS(id) {
 
 /* -------- PDF -------- */
 function gerarPDF() {
-  const clienteId = parseInt(document.getElementById('os-cliente').value); const cliente = clientes.find(c => c.id === clienteId);
+  const clienteId = document.getElementById('os-cliente').value; const cliente = clientes.find(c => String(c.id) === String(clienteId));
   if (!cliente) { toast('Selecione um cliente para gerar PDF', '⚠️'); return; }
   const cfg = { nome: localStorage.getItem('oleo_cfg_nome')||'Oficina do Léo', tel: localStorage.getItem('oleo_cfg_tel')||'', end: localStorage.getItem('oleo_cfg_end')||'' };
   const items = []; document.querySelectorAll('#itemsTbody tr').forEach(tr => { const desc = tr.querySelector('input[type="text"]')?.value||''; const tipo = tr.querySelector('select')?.value||''; const inputs = tr.querySelectorAll('input[type="number"]'); const qty = parseFloat(inputs[0]?.value)||1; const val = parseFloat(inputs[1]?.value)||0; if (desc) items.push({ desc, tipo, qty, val, total: qty*val }); });
@@ -1331,7 +1339,7 @@ function gerarPDF() {
 
 /* -------- WHATSAPP -------- */
 function enviarWhatsApp() {
-  const clienteId = parseInt(document.getElementById('os-cliente').value); const cliente = clientes.find(c => c.id === clienteId);
+  const clienteId = document.getElementById('os-cliente').value; const cliente = clientes.find(c => String(c.id) === String(clienteId));
   if (!cliente) { toast('Selecione um cliente primeiro', '⚠️'); return; }
   const tel = cliente.tel.replace(/\D/g,''); if (!tel) { toast('Este cliente não tem telefone cadastrado', '⚠️'); return; }
   const cfg = { nome: localStorage.getItem('oleo_cfg_nome')||'Oficina do Léo' }; const status = document.getElementById('os-status').value; const v = cliente.veiculo||{}; const vStr = `${v.marca||''} ${v.modelo||''} — ${v.placa||''}`.trim(); const total = calcTotal(); const osId = editingOsIdx!==null?ordens[editingOsIdx].id:osCounter;
@@ -1351,7 +1359,15 @@ function refreshDashboard() {
   if (!recentes.length) { dashList.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><h3>Nenhuma OS ainda</h3><p>Crie a primeira ordem de serviço</p><button class="btn btn-accent" onclick="navigate('os');setTimeout(()=>openNovaOS(),100)">+ Nova OS</button></div>`; }
   else { dashList.innerHTML = recentes.map(os => { const s = statusMap[os.status]||{badge:'badge-gray'}; return `<div class="os-row" onclick="navigate('os');setTimeout(()=>editarOS('${os.id}'),100)"><div class="os-initials">${os.clienteNome.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase()}</div><div class="os-info"><div class="os-name">${os.clienteNome} · #${os.id}</div><div class="os-sub">${os.veiculoObj?.modelo||os.veiculo||'—'} · R$ ${(os.total||0).toFixed(2).replace('.',',')}</div></div><span class="badge ${s.badge}">${os.status}</span></div>`; }).join(''); }
   renderOrigemChart(); renderAlertas();
-  const dashBanners = document.getElementById('dashBanners'); if (!dashBanners) return;
+  let dashBanners = document.getElementById('dashBanners');
+  if (!dashBanners) {
+    const greeting = document.querySelector('#page-dashboard .dash-greeting');
+    if (!greeting) return;
+    dashBanners = document.createElement('div');
+    dashBanners.id = 'dashBanners';
+    dashBanners.style.marginBottom = '20px';
+    greeting.after(dashBanners);
+  }
   dashBanners.innerHTML = '';
   const prontas = ordens.filter(o => o.status==='Pronto').length; const agHoje = agendamentos.filter(a => a.data===new Date().toISOString().split('T')[0]).length;
   if (prontas>0) dashBanners.innerHTML += `<div class="alert-banner" style="background:var(--green-bg);border-left-color:var(--green);color:#065F46;cursor:pointer" onclick="navigate('os');setTimeout(()=>filtroStatus('Pronto',document.querySelector('.status-filter:nth-child(5)')),100)"><span class="alert-banner-icon">🚗</span><strong>${prontas} veículo${prontas>1?'s':''} pronto${prontas>1?'s':''} para entrega!</strong><span style="margin-left:auto;font-size:0.78rem;font-weight:700">Ver →</span></div>`;
@@ -1394,7 +1410,7 @@ let calYear, calMonth, calSelectedDate, agSelectedTime = null;
 function openNovoAgendamento(dataPreSel) { const sel = document.getElementById('ag-cliente'); sel.innerHTML = '<option value="">Selecione...</option>'+clientes.map(c => `<option value="${c.id}">${c.nome}</option>`).join(''); document.getElementById('ag-data').value = dataPreSel||(calSelectedDate?calSelectedDate:new Date().toISOString().split('T')[0]); document.getElementById('ag-servico').value = ''; document.getElementById('ag-obs').value = ''; agSelectedTime = null; renderTimeGrid(document.getElementById('ag-data').value); document.getElementById('ag-data').addEventListener('change', e => renderTimeGrid(e.target.value)); openModal('overlayAgendamento'); }
 function renderTimeGrid(data) { const horarios = ['07:30','08:00','08:30','09:00','09:30','10:00','10:30','11:00','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30']; const ocupados = agendamentos.filter(a => a.data===data).map(a => a.hora); const grid = document.getElementById('agTimeGrid'); grid.innerHTML = ''; horarios.forEach(h => { const oc = ocupados.includes(h); const sel = agSelectedTime===h; const div = document.createElement('div'); div.className = 'time-slot'+(oc?' ocupado':'')+(sel?' active':''); div.textContent = h; if (!oc) div.addEventListener('click', () => selecionarHora(h)); grid.appendChild(div); }); }
 function selecionarHora(h) { agSelectedTime = h; renderTimeGrid(document.getElementById('ag-data').value); }
-function salvarAgendamento() { const clienteId = parseInt(document.getElementById('ag-cliente').value); const cliente = clientes.find(c => c.id===clienteId); if (!cliente) { toast('Selecione um cliente', '⚠️'); return; } if (!agSelectedTime) { toast('Selecione um horário', '⚠️'); return; } const data = document.getElementById('ag-data').value; if (!data) { toast('Selecione uma data', '⚠️'); return; } agendamentos.push({ id: Date.now(), clienteId, clienteNome: cliente.nome, clienteTel: cliente.tel, veiculo: cliente.veiculo?`${cliente.veiculo.marca} ${cliente.veiculo.modelo}`:'', data, hora: agSelectedTime, servico: document.getElementById('ag-servico').value, obs: document.getElementById('ag-obs').value, status: 'Confirmado' }); localStorage.setItem('oleo_agendamentos', JSON.stringify(agendamentos)); closeModal('overlayAgendamento'); renderCalendario(); if (calSelectedDate===data) renderAgendaDia(data); toast('Agendamento salvo!', '📅'); refreshDashboard(); }
+function salvarAgendamento() { const clienteId = document.getElementById('ag-cliente').value; const cliente = clientes.find(c => String(c.id) === String(clienteId)); if (!cliente) { toast('Selecione um cliente', '⚠️'); return; } if (!agSelectedTime) { toast('Selecione um horário', '⚠️'); return; } const data = document.getElementById('ag-data').value; if (!data) { toast('Selecione uma data', '⚠️'); return; } agendamentos.push({ id: Date.now(), clienteId, clienteNome: cliente.nome, clienteTel: cliente.tel, veiculo: cliente.veiculo?`${cliente.veiculo.marca} ${cliente.veiculo.modelo}`:'', data, hora: agSelectedTime, servico: document.getElementById('ag-servico').value, obs: document.getElementById('ag-obs').value, status: 'Confirmado' }); localStorage.setItem('oleo_agendamentos', JSON.stringify(agendamentos)); closeModal('overlayAgendamento'); renderCalendario(); if (calSelectedDate===data) renderAgendaDia(data); toast('Agendamento salvo!', '📅'); refreshDashboard(); }
 function initCalendario() { const now = new Date(); calYear = now.getFullYear(); calMonth = now.getMonth(); calSelectedDate = now.toISOString().split('T')[0]; renderCalendario(); renderAgendaDia(calSelectedDate); }
 function calNav(dir) { calMonth += dir; if (calMonth>11) { calMonth=0; calYear++; } if (calMonth<0) { calMonth=11; calYear--; } renderCalendario(); }
 function renderCalendario() { const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']; document.getElementById('calMonthLabel').textContent = `${meses[calMonth]} ${calYear}`; const primeiro = new Date(calYear,calMonth,1); const ultimo = new Date(calYear,calMonth+1,0); const hoje = new Date().toISOString().split('T')[0]; const daysWithEvents = new Set(agendamentos.map(a => a.data)); let html = ''; for (let i=0;i<primeiro.getDay();i++) { const d = new Date(calYear,calMonth,-primeiro.getDay()+i+1); html += `<div class="cal-day other-month">${d.getDate()}</div>`; } for (let d=1;d<=ultimo.getDate();d++) { const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; const isToday = dateStr===hoje; const isSel = dateStr===calSelectedDate; const hasEv = daysWithEvents.has(dateStr); html += `<div class="cal-day ${isToday&&!isSel?'today':''} ${isSel?'selected':''} ${hasEv?'has-event':''}" onclick="selectCalDay('${dateStr}')">${d}</div>`; } document.getElementById('calDays').innerHTML = html; }
@@ -1414,7 +1430,7 @@ function filtrarHistorico(q) { renderHistorico(q); }
 function renderAlertas() {
   const alertas = []; const hoje = new Date();
   ordens.filter(o => !['Entregue','Negado'].includes(o.status)).forEach(os => { const criado = new Date(os.criadoEm); const dias = Math.floor((hoje-criado)/86400000); if (dias>=5) alertas.push({ icon:'⏳', cls:'amber', titulo:`OS #${os.id} parada há ${dias} dias`, sub:`${os.clienteNome} · ${os.veiculoObj?.modelo||os.veiculo||'—'} · Status: ${os.status}`, acao: () => { navigate('os'); setTimeout(()=>editarOS(String(os.id)),100); } }); });
-  clientes.forEach(c => { const v = c.veiculo; if (v && v.proxRev && v.km) { const kmAtual = parseInt(v.km); const kmRev = parseInt(v.proxRev); if (kmAtual>=kmRev) alertas.push({ icon:'🚗', cls:'red', titulo:`Revisão vencida: ${c.nome}`, sub:`${v.marca} ${v.modelo} · ${v.placa} · Km atual ${kmAtual.toLocaleString('pt-BR')} / Revisão prevista ${kmRev.toLocaleString('pt-BR')} km`, acao: () => abrirPerfilCliente(clientes.indexOf(c)) }); } });
+  clientes.forEach(c => { const v = c.veiculo; if (v && v.proxRev && v.km) { const kmAtual = parseInt(v.km); const kmRev = parseInt(v.proxRev); if (kmAtual>=kmRev) alertas.push({ icon:'🚗', cls:'red', titulo:`Revisão vencida: ${c.nome}`, sub:`${v.marca} ${v.modelo} · ${v.placa} · Km atual ${kmAtual.toLocaleString('pt-BR')} / Revisão prevista ${kmRev.toLocaleString('pt-BR')} km`, acao: () => { const i = clientes.findIndex(x => x.id === c.id); if (i>=0) abrirPerfilCliente(i); } }); } });
   const hojeStr = hoje.toISOString().split('T')[0]; const agHoje = agendamentos.filter(a => a.data===hojeStr);
   if (agHoje.length) alertas.push({ icon:'📅', cls:'blue', titulo:`${agHoje.length} agendamento${agHoje.length>1?'s':''} hoje`, sub: agHoje.map(a => `${a.hora} — ${a.clienteNome}`).join(' · '), acao: () => navigate('agendamento') });
   const badge = document.getElementById('alertas-badge'); if (alertas.length) { badge.textContent = alertas.length; badge.style.display = ''; } else { badge.style.display = 'none'; }
@@ -1461,13 +1477,13 @@ document.addEventListener('click', function(e) { if (_maisOpen && !e.target.clos
 async function iaDiagnostico(btn) {
   var labelOriginal = btn.textContent;
   btn.disabled = true; btn.textContent = '⏳...';
-  var clienteId = parseInt(document.getElementById('os-cliente').value);
-  var cliente   = clientes.find(function(c) { return c.id === clienteId; });
+  var clienteId = document.getElementById('os-cliente').value;
+  var cliente   = clientes.find(function(c) { return String(c.id) === String(clienteId); });
   var problema  = document.getElementById('os-descricao').value.trim();
   var veiculo   = '';
   if (cliente && cliente.veiculo) { veiculo = ((cliente.veiculo.marca||'')+' '+(cliente.veiculo.modelo||'')+' '+(cliente.veiculo.ano||'')).trim(); }
   var historicoTexto = '';
-  if (cliente) { var osDoCliente = ordens.filter(function(o) { return o.clienteId===clienteId && o.status==='Entregue'; }).slice(-5); historicoTexto = osDoCliente.map(function(o) { return '- '+(o.descricao||o.diagnostico||'Serviço realizado')+' ('+String(o.criadoEm||'').slice(0,10)+')'; }).join('\n'); }
+  if (cliente) { var osDoCliente = ordens.filter(function(o) { return String(o.clienteId)===String(clienteId) && o.status==='Entregue'; }).slice(-5); historicoTexto = osDoCliente.map(function(o) { return '- '+(o.descricao||o.diagnostico||'Serviço realizado')+' ('+String(o.criadoEm||'').slice(0,10)+')'; }).join('\n'); }
   var resultEl = document.getElementById('ia-diagnostico-resultado');
   resultEl.style.display = 'block'; resultEl.style.background = 'var(--blue-bg)'; resultEl.style.borderColor = 'var(--blue)'; resultEl.textContent = '⏳ Analisando problema...';
   var res = await apiNuvem({ acao: 'ia', feature: 'diagnostico', veiculo: veiculo, problema: problema, historico: historicoTexto, oficinaNome: (infoOficinaAtual && infoOficinaAtual.oficina && infoOficinaAtual.oficina.nome) ? infoOficinaAtual.oficina.nome : '' });
@@ -1479,8 +1495,8 @@ async function iaDiagnostico(btn) {
 async function iaSugerirItens(btn) {
   var labelOriginal = btn.textContent;
   btn.disabled = true; btn.textContent = '⏳ Consultando IA...';
-  var clienteId  = parseInt(document.getElementById('os-cliente').value);
-  var cliente    = clientes.find(function(c) { return c.id === clienteId; });
+  var clienteId  = document.getElementById('os-cliente').value;
+  var cliente    = clientes.find(function(c) { return String(c.id) === String(clienteId); });
   var problema   = document.getElementById('os-descricao').value.trim();
   var diagnostico = document.getElementById('os-diagnostico').value.trim();
   var veiculo    = '';
