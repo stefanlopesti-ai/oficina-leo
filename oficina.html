@@ -1376,18 +1376,32 @@ function salvarOS() {
   // Notifica o app do cliente (mesma máquina) em tempo real
   bcPushStatusMec(os.id, os.status);
 
-  const novaOS = editingOsIdx===null;
+bcPushStatusMec(os.id, os.status);
+
+  const novaOS = editingOsIdx === null;
   const mudouStatus = statusAntigo !== null && statusAntigo !== os.status;
 
-  // Fluxo: nova OS em Orçamento → manda orçamento por WhatsApp
+  closeModal('overlayOS');
+  renderOS();
+  refreshDashboard();
+
   if (novaOS && os.status === 'Orçamento') {
-    toast('OS marcada como Orçamento! Enviando orçamento por WhatsApp...');
-    try { enviarWhatsApp(); } catch(e) { console.error(e); }
-  }
-  // Fluxo: status mudou para "Pronto" → manda mensagem de "pronto p/ retirada" no WhatsApp
-  else if (mudouStatus && os.status === 'Pronto') {
-    toast('OS marcada como PRONTA! Avisando o cliente via WhatsApp...','🚗');
-    try { enviarWhatsApp(); } catch(e) { console.error(e); }
+    toast('OS criada como Orçamento! Enviando via WhatsApp...');
+    setTimeout(() => {
+      editingOsIdx = ordens.length - 1;
+      enviarWhatsApp();
+    }, 300);
+  } else if (mudouStatus && os.status === 'Pronto') {
+    toast('OS marcada como PRONTA! Avisando o cliente via WhatsApp...', '🚗');
+    setTimeout(() => {
+      editingOsIdx = ordens.findIndex(o => String(o.id) === String(os.id));
+      enviarWhatsApp();
+    }, 300);
+  } else if (mudouStatus && os.status === 'Entregue') {
+    abrirEncerramento(os.id);
+    return;
+  } else {
+    toast(novaOS ? 'OS criada com sucesso!' : 'OS atualizada!');
   }
   // Fluxo: status mudou para "Entregue" → abre modal de encerramento (pagamento + assinaturas + PDF)
   else if (mudouStatus && os.status === 'Entregue') {
