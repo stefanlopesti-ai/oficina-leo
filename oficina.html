@@ -929,7 +929,15 @@ async function syncComNuvem() {
     const res = await apiNuvem({ acao: 'syncTotal' });
     if (res.ok) {
       if (res.clientes && res.clientes.length) { clientes = res.clientes; localStorage.setItem('oleo_clientes', JSON.stringify(clientes)); }
-      if (res.ordens && res.ordens.length) { ordens = res.ordens; localStorage.setItem('oleo_os', JSON.stringify(ordens)); }
+      if (res.ordens && res.ordens.length) {
+        // Merge por id preservando campos locais que a nuvem não armazena
+        res.ordens.forEach(nova => {
+          const idx = ordens.findIndex(o => String(o.id) === String(nova.id));
+          if (idx >= 0) ordens[idx] = { ...ordens[idx], status: nova.status };
+          else ordens.push(nova);
+        });
+        localStorage.setItem('oleo_os', JSON.stringify(ordens));
+      }
       renderOS(); renderClientes(); refreshDashboard && refreshDashboard(); carregarInfoOficina();
       toast('Sincronizado com a nuvem! ☁️');
     } else { toast('Erro no sync: ' + (res.erro || 'desconhecido')); }
@@ -967,8 +975,25 @@ function iniciarPollingOS() {
     try {
       const res = await apiNuvem({ acao: 'listarOrdens' });
       if (!res.ok || !res.ordens) return;
-      const alteradas = res.ordens.filter(nova => { const antiga = ordens.find(o => String(o.id) === String(nova.id)); return antiga && antiga.status !== nova.status; });
-      ordens = res.ordens; localStorage.setItem('oleo_os', JSON.stringify(ordens));
+      const alteradas = [];
+      let mudou = false;
+      // Merge por id preservando campos locais (descricao, diagnostico, items, etc.)
+      res.ordens.forEach(nova => {
+        const idx = ordens.findIndex(o => String(o.id) === String(nova.id));
+        if (idx >= 0) {
+          const antiga = ordens[idx];
+          if (antiga.status !== nova.status) {
+            alteradas.push(nova);
+            ordens[idx] = { ...antiga, status: nova.status };
+            mudou = true;
+          }
+        } else {
+          // OS nova vinda da nuvem — adiciona como veio
+          ordens.push(nova);
+          mudou = true;
+        }
+      });
+      if (mudou) localStorage.setItem('oleo_os', JSON.stringify(ordens));
       alteradas.forEach(os => {
         const icone = os.status === 'Em andamento' ? '✅' : (os.status === 'Negado' ? '🚫' : '🔔');
         toast(`${icone} OS #${String(os.id).slice(-6)} — cliente ${os.status === 'Em andamento' ? 'APROVOU' : (os.status === 'Negado' ? 'RECUSOU' : 'atualizou para: ' + os.status)} o orçamento`);
