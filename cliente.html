@@ -27,265 +27,280 @@
   --radius:      14px;
   --shadow:      0 2px 16px rgba(0,0,0,0.08);
 }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;}
+.tela{display:none;min-height:100vh;}
+.tela.ativa{display:flex;flex-direction:column;}
+#tela-login{align-items:center;justify-content:center;padding:24px 20px;background:var(--charcoal);}
+.login-box{background:var(--surface);border-radius:24px;padding:36px 28px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,0.3);}
+.login-logo{text-align:center;margin-bottom:28px;}
+.login-logo .logo-icon{width:64px;height:64px;background:var(--accent);border-radius:18px;display:inline-flex;align-items:center;justify-content:center;font-size:2rem;margin-bottom:14px;}
+.login-logo h1{font-size:1.3rem;font-weight:900;color:var(--text);letter-spacing:-0.3px;}
+.login-logo p{font-size:0.82rem;color:var(--muted);margin-top:4px;}
+.form-group{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;}
+.form-group label{font-size:0.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;}
+.form-group input,.form-group select{font-family:'Inter',sans-serif;font-size:1rem;color:var(--text);background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:12px 14px;outline:none;width:100%;transition:border-color 0.15s;}
+.form-group input:focus,.form-group select:focus{border-color:var(--accent);background:var(--surface);}
+.btn-primary{width:100%;padding:14px;background:var(--charcoal);color:#fff;border:none;border-radius:12px;font-size:0.95rem;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;margin-top:8px;transition:all 0.15s;display:flex;align-items:center;justify-content:center;gap:8px;}
+.btn-primary:hover{background:#2a2a2a;}
+.btn-primary:active{transform:scale(0.98);}
+.btn-primary.loading{opacity:0.6;pointer-events:none;}
+.btn-accent{background:var(--accent);color:var(--charcoal);}
+.btn-accent:hover{background:var(--accent-dark);}
+.erro-msg{background:var(--red-bg);color:var(--red);border-radius:9px;padding:10px 14px;font-size:0.82rem;font-weight:600;margin-bottom:14px;display:none;}
+.erro-msg.visivel{display:block;}
+#tela-home{background:var(--bg);}
+.app-header{background:var(--charcoal);padding:16px 20px 20px;color:#fff;position:sticky;top:0;z-index:100;}
+.header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.header-logo{display:flex;align-items:center;gap:10px;}
+.header-logo .logo-mini{width:32px;height:32px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1rem;}
+.header-logo span{font-size:0.9rem;font-weight:800;color:#fff;}
+.btn-sair{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.7);border-radius:8px;padding:6px 12px;font-size:0.75rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;}
+.btn-sair:hover{background:rgba(255,255,255,0.18);color:#fff;}
+.header-greeting{font-size:1.1rem;font-weight:800;color:#fff;line-height:1.3;}
+.header-greeting small{display:block;font-size:0.75rem;font-weight:400;color:rgba(255,255,255,0.55);margin-top:2px;}
+.home-content{flex:1;padding:20px 16px 100px;}
+.stats-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px;}
+.stat-mini{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);text-align:center;}
+.stat-mini .num{font-size:1.8rem;font-weight:900;color:var(--text);line-height:1;}
+.stat-mini .lbl{font-size:0.72rem;color:var(--muted);font-weight:500;margin-top:5px;}
+.secao-titulo{font-size:0.75rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:12px;}
+.os-card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);margin-bottom:12px;overflow:hidden;box-shadow:var(--shadow);cursor:pointer;transition:all 0.15s;}
+.os-card:active{transform:scale(0.99);}
+.os-card-header{padding:14px 16px 12px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
+.os-veiculo{font-size:0.95rem;font-weight:800;color:var(--text);line-height:1.2;}
+.os-veiculo small{display:block;font-size:0.72rem;font-weight:500;color:var(--muted);margin-top:2px;}
+.os-num{font-size:0.68rem;font-weight:700;color:var(--muted);white-space:nowrap;}
+.os-problema{padding:0 16px 12px;font-size:0.82rem;color:var(--muted);line-height:1.4;}
+.os-footer{padding:10px 16px;border-top:1px solid var(--border);background:var(--surface2);display:flex;align-items:center;justify-content:space-between;}
+.os-valor{font-size:1rem;font-weight:900;color:var(--text);}
+.os-data{font-size:0.7rem;color:var(--muted);}
+.badge{font-size:0.68rem;font-weight:700;padding:4px 10px;border-radius:20px;white-space:nowrap;}
+.badge-orcamento{background:var(--blue-bg);color:var(--blue);}
+.badge-aprovado{background:#EEF2FF;color:#4F46E5;}
+.badge-andamento{background:var(--amber-bg);color:#B45309;}
+.badge-pronto{background:var(--green-bg);color:#059669;}
+.badge-entregue{background:var(--surface2);color:var(--muted);border:1px solid var(--border);}
+.badge-negado{background:var(--red-bg);color:var(--red);}
+.banner-aprovacao{background:linear-gradient(135deg,#F5C400 0%,#FFD740 100%);border-radius:var(--radius);padding:16px;margin-bottom:16px;display:flex;align-items:center;gap:12px;cursor:pointer;box-shadow:0 4px 20px rgba(245,196,0,0.3);transition:transform 0.15s;}
+.banner-aprovacao:active{transform:scale(0.99);}
+.banner-aprovacao .banner-icon{font-size:1.8rem;flex-shrink:0;}
+.banner-aprovacao .banner-text strong{display:block;font-size:0.9rem;font-weight:800;color:var(--charcoal);}
+.banner-aprovacao .banner-text span{font-size:0.75rem;color:rgba(26,26,26,0.7);}
+.banner-aprovacao .banner-arrow{margin-left:auto;font-size:1.2rem;color:var(--charcoal);flex-shrink:0;}
+.empty{text-align:center;padding:48px 20px;color:var(--muted);}
+.empty .empty-icon{font-size:3rem;margin-bottom:12px;}
+.empty h3{font-size:1rem;font-weight:700;color:var(--text);margin-bottom:6px;}
+.empty p{font-size:0.82rem;}
+.loading-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;gap:14px;}
+.spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:500;display:none;align-items:flex-end;}
+.overlay.aberto{display:flex;}
+.modal-sheet{background:var(--surface);border-radius:24px 24px 0 0;width:100%;max-height:92vh;overflow-y:auto;animation:sheetUp 0.25s ease;}
+@keyframes sheetUp{from{transform:translateY(60px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+.modal-drag{width:40px;height:4px;background:var(--border);border-radius:2px;margin:12px auto 4px;}
+.modal-header{padding:4px 20px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.modal-title{font-size:1rem;font-weight:800;color:var(--text);}
+.btn-fechar{background:var(--surface2);border:1px solid var(--border);border-radius:8px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1rem;color:var(--muted);}
+.modal-body{padding:20px;}
+.status-progress{display:flex;align-items:center;margin:16px 0 24px;gap:0;}
+.sp-step{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;position:relative;}
+.sp-step::before{content:'';position:absolute;top:12px;left:50%;right:-50%;height:2px;background:var(--border);}
+.sp-step:last-child::before{display:none;}
+.sp-dot{width:24px;height:24px;border-radius:50%;background:var(--surface2);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:0.6rem;position:relative;z-index:1;transition:all 0.2s;}
+.sp-step.feito .sp-dot{background:var(--green);border-color:var(--green);color:#fff;font-size:0.7rem;}
+.sp-step.atual .sp-dot{background:var(--accent);border-color:var(--accent);}
+.sp-step.feito::before{background:var(--green);}
+.sp-step.negado .sp-dot{background:var(--red);border-color:var(--red);color:#fff;font-size:0.7rem;}
+.sp-lbl{font-size:0.58rem;font-weight:600;color:var(--muted);text-align:center;line-height:1.2;}
+.sp-step.feito .sp-lbl,.sp-step.atual .sp-lbl,.sp-step.negado .sp-lbl{color:var(--text);}
+.info-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:0.875rem;}
+.info-row:last-child{border-bottom:none;}
+.info-row .info-lbl{color:var(--muted);font-weight:500;}
+.info-row .info-val{font-weight:700;color:var(--text);text-align:right;}
+.itens-lista{margin:16px 0;}
+.item-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);}
+.item-row:last-child{border-bottom:none;}
+.item-tipo{font-size:0.65rem;font-weight:700;padding:2px 8px;border-radius:20px;flex-shrink:0;}
+.tipo-servico{background:var(--blue-bg);color:var(--blue);}
+.tipo-peca{background:var(--amber-bg);color:#B45309;}
+.item-desc{flex:1;font-size:0.82rem;color:var(--text);}
+.item-qtd{font-size:0.72rem;color:var(--muted);}
+.item-val{font-size:0.875rem;font-weight:700;color:var(--text);white-space:nowrap;}
+.os-total{display:flex;justify-content:space-between;align-items:center;background:var(--surface2);border:1.5px solid var(--border);border-radius:12px;padding:14px 16px;margin:16px 0;}
+.os-total .total-lbl{font-size:0.875rem;font-weight:600;color:var(--muted);}
+.os-total .total-val{font-size:1.4rem;font-weight:900;color:var(--text);}
+.btn-aprovar{width:100%;padding:16px;background:var(--accent);color:var(--charcoal);border:none;border-radius:14px;font-size:1rem;font-weight:800;font-family:'Inter',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 20px rgba(245,196,0,0.4);transition:all 0.15s;margin-bottom:10px;}
+.btn-aprovar:hover{background:var(--accent-dark);transform:translateY(-1px);}
+.btn-aprovar:active{transform:scale(0.98);}
+.btn-aprovar.loading{opacity:0.6;pointer-events:none;}
+.btn-recusar{width:100%;padding:13px;background:none;color:var(--red);border:1.5px solid var(--red);border-radius:14px;font-size:0.875rem;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;transition:all 0.15s;}
+.btn-recusar:hover{background:var(--red-bg);}
+.aprovado-badge{background:var(--green-bg);border:1px solid var(--green);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;margin:16px 0;}
+.aprovado-badge .ab-icon{font-size:1.5rem;}
+.aprovado-badge .ab-text strong{display:block;font-size:0.875rem;font-weight:800;color:#065F46;}
+.aprovado-badge .ab-text span{font-size:0.75rem;color:#059669;}
+.negado-badge{background:var(--red-bg);border:1px solid var(--red);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;margin:16px 0;}
+.negado-badge .nb-icon{font-size:1.5rem;}
+.negado-badge .nb-text strong{display:block;font-size:0.875rem;font-weight:800;color:#991B1B;}
+.negado-badge .nb-text span{font-size:0.75rem;color:var(--red);}
+.toast-wrap{position:fixed;bottom:24px;left:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none;}
+.toast{background:var(--charcoal);color:#fff;padding:13px 18px;border-radius:12px;font-size:0.875rem;font-weight:600;display:flex;align-items:center;gap:10px;animation:toastIn 0.25s ease;pointer-events:all;box-shadow:0 8px 24px rgba(0,0,0,0.3);}
+@keyframes toastIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+.confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:600;display:none;align-items:center;justify-content:center;padding:20px;}
+.confirm-overlay.aberto{display:flex;}
+.confirm-box{background:var(--surface);border-radius:20px;padding:28px 24px;width:100%;max-width:360px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:popIn 0.2s ease;}
+@keyframes popIn{from{opacity:0;transform:scale(0.92);}to{opacity:1;transform:scale(1);}}
+.confirm-icon{font-size:3rem;margin-bottom:12px;}
+.confirm-title{font-size:1.1rem;font-weight:800;color:var(--text);margin-bottom:8px;}
+.confirm-text{font-size:0.85rem;color:var(--muted);margin-bottom:24px;line-height:1.5;}
+.confirm-btns{display:flex;flex-direction:column;gap:10px;}
+.recusar-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:600;display:none;align-items:center;justify-content:center;padding:20px;}
+.recusar-overlay.aberto{display:flex;}
+#tela-config{background:var(--charcoal);align-items:center;justify-content:center;padding:24px 20px;text-align:center;}
+.config-box{background:var(--surface);border-radius:24px;padding:32px 24px;width:100%;max-width:400px;}
+.config-box h2{font-size:1.1rem;font-weight:800;margin-bottom:8px;}
+.config-box p{font-size:0.82rem;color:var(--muted);margin-bottom:20px;line-height:1.5;}
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-body {
-  font-family: 'Inter', sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-  -webkit-font-smoothing: antialiased;
-}
-
-.tela { display: none; min-height: 100vh; }
-.tela.ativa { display: flex; flex-direction: column; }
-
-#tela-login {
+/* ============================================================
+   CHAT IA
+   ============================================================ */
+.ia-fab {
+  position: fixed;
+  bottom: 24px;
+  right: 20px;
+  z-index: 800;
+  width: 54px;
+  height: 54px;
+  background: var(--charcoal);
+  border-radius: 50%;
+  display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px 20px;
-  background: var(--charcoal);
+  font-size: 1.5rem;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  transition: all 0.2s;
+  border: none;
+  user-select: none;
 }
+.ia-fab:hover { transform: scale(1.08); background: #2a2a2a; }
+.ia-fab.aberto { background: var(--accent); }
 
-.login-box {
+.ia-panel {
+  display: none;
+  position: fixed;
+  bottom: 90px;
+  right: 16px;
+  left: 16px;
+  max-width: 420px;
+  margin-left: auto;
   background: var(--surface);
-  border-radius: 24px;
-  padding: 36px 28px;
-  width: 100%;
-  max-width: 400px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  border-radius: 20px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.2);
+  z-index: 800;
+  flex-direction: column;
+  overflow: hidden;
+  max-height: 60vh;
+}
+.ia-panel.aberto { display: flex; }
+
+.ia-panel-header {
+  padding: 14px 16px;
+  background: var(--charcoal);
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 700;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+.ia-panel-header button {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.6);
+  font-size: 1.2rem;
+  cursor: pointer;
+  line-height: 1;
+  font-family: 'Inter', sans-serif;
+}
+.ia-panel-header button:hover { color: #fff; }
+
+.ia-msgs {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.login-logo { text-align: center; margin-bottom: 28px; }
-.login-logo .logo-icon {
-  width: 64px; height: 64px;
-  background: var(--accent);
-  border-radius: 18px;
-  display: inline-flex;
-  align-items: center; justify-content: center;
-  font-size: 2rem; margin-bottom: 14px;
+.ia-msg-bot {
+  background: var(--surface2);
+  color: var(--text);
+  border-radius: 12px 12px 12px 4px;
+  padding: 10px 14px;
+  font-size: 0.82rem;
+  max-width: 85%;
+  line-height: 1.5;
+  align-self: flex-start;
 }
-.login-logo h1 { font-size: 1.3rem; font-weight: 900; color: var(--text); letter-spacing: -0.3px; }
-.login-logo p  { font-size: 0.82rem; color: var(--muted); margin-top: 4px; }
+.ia-msg-user {
+  background: var(--charcoal);
+  color: #fff;
+  border-radius: 12px 12px 4px 12px;
+  padding: 10px 14px;
+  font-size: 0.82rem;
+  max-width: 85%;
+  line-height: 1.5;
+  align-self: flex-end;
+}
+.ia-msg-typing {
+  background: var(--surface2);
+  color: var(--muted);
+  border-radius: 12px 12px 12px 4px;
+  padding: 10px 14px;
+  font-size: 0.82rem;
+  max-width: 85%;
+  align-self: flex-start;
+  font-style: italic;
+}
 
-.form-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
-.form-group label { font-size: 0.72rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
-.form-group input, .form-group select {
-  font-family: 'Inter', sans-serif; font-size: 1rem; color: var(--text);
-  background: var(--surface2); border: 1.5px solid var(--border);
-  border-radius: 10px; padding: 12px 14px; outline: none; width: 100%;
+.ia-input-row {
+  padding: 10px 12px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.ia-input-row input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-family: 'Inter', sans-serif;
+  outline: none;
+  color: var(--text);
+  background: var(--surface2);
   transition: border-color 0.15s;
 }
-.form-group input:focus, .form-group select:focus { border-color: var(--accent); background: var(--surface); }
-
-.btn-primary {
-  width: 100%; padding: 14px;
-  background: var(--charcoal); color: #fff;
-  border: none; border-radius: 12px;
-  font-size: 0.95rem; font-weight: 700; font-family: 'Inter', sans-serif;
-  cursor: pointer; margin-top: 8px; transition: all 0.15s;
-  display: flex; align-items: center; justify-content: center; gap: 8px;
+.ia-input-row input:focus { border-color: var(--accent); background: var(--surface); }
+.ia-input-row button {
+  background: var(--charcoal);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  transition: background 0.15s;
 }
-.btn-primary:hover { background: #2a2a2a; }
-.btn-primary:active { transform: scale(0.98); }
-.btn-primary.loading { opacity: 0.6; pointer-events: none; }
-.btn-accent { background: var(--accent); color: var(--charcoal); }
-.btn-accent:hover { background: var(--accent-dark); }
-
-.erro-msg {
-  background: var(--red-bg); color: var(--red);
-  border-radius: 9px; padding: 10px 14px;
-  font-size: 0.82rem; font-weight: 600; margin-bottom: 14px; display: none;
-}
-.erro-msg.visivel { display: block; }
-
-#tela-home { background: var(--bg); }
-
-.app-header {
-  background: var(--charcoal); padding: 16px 20px 20px; color: #fff;
-  position: sticky; top: 0; z-index: 100;
-}
-.header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-.header-logo { display: flex; align-items: center; gap: 10px; }
-.header-logo .logo-mini {
-  width: 32px; height: 32px; background: var(--accent);
-  border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1rem;
-}
-.header-logo span { font-size: 0.9rem; font-weight: 800; color: #fff; }
-.btn-sair {
-  background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15);
-  color: rgba(255,255,255,0.7); border-radius: 8px; padding: 6px 12px;
-  font-size: 0.75rem; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.15s;
-}
-.btn-sair:hover { background: rgba(255,255,255,0.18); color: #fff; }
-.header-greeting { font-size: 1.1rem; font-weight: 800; color: #fff; line-height: 1.3; }
-.header-greeting small { display: block; font-size: 0.75rem; font-weight: 400; color: rgba(255,255,255,0.55); margin-top: 2px; }
-
-.home-content { flex: 1; padding: 20px 16px 32px; }
-
-.stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
-.stat-mini {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); text-align: center;
-}
-.stat-mini .num { font-size: 1.8rem; font-weight: 900; color: var(--text); line-height: 1; }
-.stat-mini .lbl { font-size: 0.72rem; color: var(--muted); font-weight: 500; margin-top: 5px; }
-
-.secao-titulo { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 12px; }
-
-.os-card {
-  background: var(--surface); border: 1.5px solid var(--border);
-  border-radius: var(--radius); margin-bottom: 12px; overflow: hidden;
-  box-shadow: var(--shadow); cursor: pointer; transition: all 0.15s;
-}
-.os-card:active { transform: scale(0.99); }
-.os-card-header { padding: 14px 16px 12px; display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
-.os-veiculo { font-size: 0.95rem; font-weight: 800; color: var(--text); line-height: 1.2; }
-.os-veiculo small { display: block; font-size: 0.72rem; font-weight: 500; color: var(--muted); margin-top: 2px; }
-.os-num { font-size: 0.68rem; font-weight: 700; color: var(--muted); white-space: nowrap; }
-.os-problema { padding: 0 16px 12px; font-size: 0.82rem; color: var(--muted); line-height: 1.4; }
-.os-footer {
-  padding: 10px 16px; border-top: 1px solid var(--border); background: var(--surface2);
-  display: flex; align-items: center; justify-content: space-between;
-}
-.os-valor { font-size: 1rem; font-weight: 900; color: var(--text); }
-.os-data  { font-size: 0.7rem; color: var(--muted); }
-
-/* BADGES */
-.badge { font-size: 0.68rem; font-weight: 700; padding: 4px 10px; border-radius: 20px; white-space: nowrap; }
-.badge-orcamento { background: var(--blue-bg);   color: var(--blue); }
-.badge-aprovado  { background: #EEF2FF;           color: #4F46E5; }
-.badge-andamento { background: var(--amber-bg);   color: #B45309; }
-.badge-pronto    { background: var(--green-bg);   color: #059669; }
-.badge-entregue  { background: var(--surface2);   color: var(--muted); border: 1px solid var(--border); }
-/* NOVO: badge Negado */
-.badge-negado    { background: var(--red-bg);     color: var(--red); }
-
-.banner-aprovacao {
-  background: linear-gradient(135deg, #F5C400 0%, #FFD740 100%);
-  border-radius: var(--radius); padding: 16px; margin-bottom: 16px;
-  display: flex; align-items: center; gap: 12px; cursor: pointer;
-  box-shadow: 0 4px 20px rgba(245,196,0,0.3); transition: transform 0.15s;
-}
-.banner-aprovacao:active { transform: scale(0.99); }
-.banner-aprovacao .banner-icon { font-size: 1.8rem; flex-shrink: 0; }
-.banner-aprovacao .banner-text strong { display: block; font-size: 0.9rem; font-weight: 800; color: var(--charcoal); }
-.banner-aprovacao .banner-text span   { font-size: 0.75rem; color: rgba(26,26,26,0.7); }
-.banner-aprovacao .banner-arrow       { margin-left: auto; font-size: 1.2rem; color: var(--charcoal); flex-shrink: 0; }
-
-.empty { text-align: center; padding: 48px 20px; color: var(--muted); }
-.empty .empty-icon { font-size: 3rem; margin-bottom: 12px; }
-.empty h3 { font-size: 1rem; font-weight: 700; color: var(--text); margin-bottom: 6px; }
-.empty p  { font-size: 0.82rem; }
-
-.loading-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; gap: 14px; }
-.spinner { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-
-.overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 500; display: none; align-items: flex-end; }
-.overlay.aberto { display: flex; }
-.modal-sheet { background: var(--surface); border-radius: 24px 24px 0 0; width: 100%; max-height: 92vh; overflow-y: auto; animation: sheetUp 0.25s ease; }
-@keyframes sheetUp { from { transform: translateY(60px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-.modal-drag { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 12px auto 4px; }
-.modal-header { padding: 4px 20px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
-.modal-title  { font-size: 1rem; font-weight: 800; color: var(--text); }
-.btn-fechar {
-  background: var(--surface2); border: 1px solid var(--border);
-  border-radius: 8px; width: 32px; height: 32px;
-  display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1rem; color: var(--muted);
-}
-.modal-body { padding: 20px; }
-
-.status-progress { display: flex; align-items: center; margin: 16px 0 24px; gap: 0; }
-.sp-step { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; position: relative; }
-.sp-step::before { content: ''; position: absolute; top: 12px; left: 50%; right: -50%; height: 2px; background: var(--border); }
-.sp-step:last-child::before { display: none; }
-.sp-dot { width: 24px; height: 24px; border-radius: 50%; background: var(--surface2); border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 0.6rem; position: relative; z-index: 1; transition: all 0.2s; }
-.sp-step.feito .sp-dot  { background: var(--green); border-color: var(--green); color: #fff; font-size: 0.7rem; }
-.sp-step.atual .sp-dot  { background: var(--accent); border-color: var(--accent); }
-.sp-step.feito::before  { background: var(--green); }
-/* Negado: dot vermelho */
-.sp-step.negado .sp-dot { background: var(--red); border-color: var(--red); color: #fff; font-size: 0.7rem; }
-.sp-lbl { font-size: 0.58rem; font-weight: 600; color: var(--muted); text-align: center; line-height: 1.2; }
-.sp-step.feito .sp-lbl, .sp-step.atual .sp-lbl, .sp-step.negado .sp-lbl { color: var(--text); }
-
-.info-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 0.875rem; }
-.info-row:last-child { border-bottom: none; }
-.info-row .info-lbl { color: var(--muted); font-weight: 500; }
-.info-row .info-val { font-weight: 700; color: var(--text); text-align: right; }
-
-.itens-lista { margin: 16px 0; }
-.item-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
-.item-row:last-child { border-bottom: none; }
-.item-tipo { font-size: 0.65rem; font-weight: 700; padding: 2px 8px; border-radius: 20px; flex-shrink: 0; }
-.tipo-servico { background: var(--blue-bg);  color: var(--blue); }
-.tipo-peca    { background: var(--amber-bg); color: #B45309; }
-.item-desc { flex: 1; font-size: 0.82rem; color: var(--text); }
-.item-qtd  { font-size: 0.72rem; color: var(--muted); }
-.item-val  { font-size: 0.875rem; font-weight: 700; color: var(--text); white-space: nowrap; }
-
-.os-total { display: flex; justify-content: space-between; align-items: center; background: var(--surface2); border: 1.5px solid var(--border); border-radius: 12px; padding: 14px 16px; margin: 16px 0; }
-.os-total .total-lbl { font-size: 0.875rem; font-weight: 600; color: var(--muted); }
-.os-total .total-val { font-size: 1.4rem; font-weight: 900; color: var(--text); }
-
-.btn-aprovar {
-  width: 100%; padding: 16px; background: var(--accent); color: var(--charcoal);
-  border: none; border-radius: 14px; font-size: 1rem; font-weight: 800; font-family: 'Inter', sans-serif;
-  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
-  box-shadow: 0 4px 20px rgba(245,196,0,0.4); transition: all 0.15s; margin-bottom: 10px;
-}
-.btn-aprovar:hover  { background: var(--accent-dark); transform: translateY(-1px); }
-.btn-aprovar:active { transform: scale(0.98); }
-.btn-aprovar.loading { opacity: 0.6; pointer-events: none; }
-
-.btn-recusar {
-  width: 100%; padding: 13px; background: none; color: var(--red);
-  border: 1.5px solid var(--red); border-radius: 14px;
-  font-size: 0.875rem; font-weight: 700; font-family: 'Inter', sans-serif; cursor: pointer; transition: all 0.15s;
-}
-.btn-recusar:hover { background: var(--red-bg); }
-
-.aprovado-badge {
-  background: var(--green-bg); border: 1px solid var(--green);
-  border-radius: 12px; padding: 14px 16px;
-  display: flex; align-items: center; gap: 12px; margin: 16px 0;
-}
-.aprovado-badge .ab-icon { font-size: 1.5rem; }
-.aprovado-badge .ab-text strong { display: block; font-size: 0.875rem; font-weight: 800; color: #065F46; }
-.aprovado-badge .ab-text span   { font-size: 0.75rem; color: #059669; }
-
-/* NOVO: badge negado na OS */
-.negado-badge {
-  background: var(--red-bg); border: 1px solid var(--red);
-  border-radius: 12px; padding: 14px 16px;
-  display: flex; align-items: center; gap: 12px; margin: 16px 0;
-}
-.negado-badge .nb-icon { font-size: 1.5rem; }
-.negado-badge .nb-text strong { display: block; font-size: 0.875rem; font-weight: 800; color: #991B1B; }
-.negado-badge .nb-text span   { font-size: 0.75rem; color: var(--red); }
-
-.toast-wrap { position: fixed; bottom: 24px; left: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
-.toast { background: var(--charcoal); color: #fff; padding: 13px 18px; border-radius: 12px; font-size: 0.875rem; font-weight: 600; display: flex; align-items: center; gap: 10px; animation: toastIn 0.25s ease; pointer-events: all; box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
-@keyframes toastIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-
-.confirm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 600; display: none; align-items: center; justify-content: center; padding: 20px; }
-.confirm-overlay.aberto { display: flex; }
-.confirm-box { background: var(--surface); border-radius: 20px; padding: 28px 24px; width: 100%; max-width: 360px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3); animation: popIn 0.2s ease; }
-@keyframes popIn { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } }
-.confirm-icon  { font-size: 3rem; margin-bottom: 12px; }
-.confirm-title { font-size: 1.1rem; font-weight: 800; color: var(--text); margin-bottom: 8px; }
-.confirm-text  { font-size: 0.85rem; color: var(--muted); margin-bottom: 24px; line-height: 1.5; }
-.confirm-btns  { display: flex; flex-direction: column; gap: 10px; }
-
-/* MODAL CONFIRMAÇÃO RECUSA */
-.recusar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 600; display: none; align-items: center; justify-content: center; padding: 20px; }
-.recusar-overlay.aberto { display: flex; }
-
-#tela-config { background: var(--charcoal); align-items: center; justify-content: center; padding: 24px 20px; text-align: center; }
-.config-box { background: var(--surface); border-radius: 24px; padding: 32px 24px; width: 100%; max-width: 400px; }
-.config-box h2 { font-size: 1.1rem; font-weight: 800; margin-bottom: 8px; }
-.config-box p  { font-size: 0.82rem; color: var(--muted); margin-bottom: 20px; line-height: 1.5; }
+.ia-input-row button:hover { background: #2a2a2a; }
 </style>
 </head>
 <body>
@@ -342,14 +357,8 @@ body {
       <p>Antes de continuar, troque sua senha e cadastre uma forma de recuperá-la</p>
     </div>
     <div id="erro-primeiro" class="erro-msg"></div>
-    <div class="form-group">
-      <label>Nova senha</label>
-      <input type="password" id="pa-nova-senha" placeholder="Mínimo 4 caracteres">
-    </div>
-    <div class="form-group">
-      <label>Confirmar nova senha</label>
-      <input type="password" id="pa-nova-senha2" placeholder="Repita a senha">
-    </div>
+    <div class="form-group"><label>Nova senha</label><input type="password" id="pa-nova-senha" placeholder="Mínimo 4 caracteres"></div>
+    <div class="form-group"><label>Confirmar nova senha</label><input type="password" id="pa-nova-senha2" placeholder="Repita a senha"></div>
     <div class="form-group">
       <label>Pergunta de segurança</label>
       <select id="pa-pergunta">
@@ -359,10 +368,7 @@ body {
         <option value="Qual o nome da sua primeira escola?">Qual o nome da sua primeira escola?</option>
       </select>
     </div>
-    <div class="form-group">
-      <label>Resposta</label>
-      <input type="text" id="pa-resposta" placeholder="Sua resposta (lembre-se dela!)">
-    </div>
+    <div class="form-group"><label>Resposta</label><input type="text" id="pa-resposta" placeholder="Sua resposta (lembre-se dela!)"></div>
     <div class="form-group" id="pa-origem-box">
       <label>Como você conheceu a oficina?</label>
       <select id="pa-origem">
@@ -387,26 +393,14 @@ body {
     </div>
     <div id="erro-esqueci" class="erro-msg"></div>
     <div id="esqueci-passo1">
-      <div class="form-group">
-        <label>CPF</label>
-        <input type="text" id="esqueci-cpf" placeholder="000.000.000-00" oninput="mascCPF(this)" inputmode="numeric">
-      </div>
+      <div class="form-group"><label>CPF</label><input type="text" id="esqueci-cpf" placeholder="000.000.000-00" oninput="mascCPF(this)" inputmode="numeric"></div>
       <button class="btn-primary" onclick="buscarPerguntaSeguranca()">Continuar</button>
     </div>
     <div id="esqueci-passo2" style="display:none">
       <p id="esqueci-pergunta-texto" style="font-weight:600;margin-bottom:14px;"></p>
-      <div class="form-group">
-        <label>Resposta</label>
-        <input type="text" id="esqueci-resposta" placeholder="Sua resposta">
-      </div>
-      <div class="form-group">
-        <label>Nova senha</label>
-        <input type="password" id="esqueci-nova-senha" placeholder="Mínimo 4 caracteres">
-      </div>
-      <div class="form-group">
-        <label>Confirmar nova senha</label>
-        <input type="password" id="esqueci-nova-senha2" placeholder="Repita a senha">
-      </div>
+      <div class="form-group"><label>Resposta</label><input type="text" id="esqueci-resposta" placeholder="Sua resposta"></div>
+      <div class="form-group"><label>Nova senha</label><input type="password" id="esqueci-nova-senha" placeholder="Mínimo 4 caracteres"></div>
+      <div class="form-group"><label>Confirmar nova senha</label><input type="password" id="esqueci-nova-senha2" placeholder="Repita a senha"></div>
       <button class="btn-primary btn-accent" onclick="confirmarRecuperacaoSenha()">Trocar senha</button>
     </div>
     <p style="font-size:0.78rem;color:var(--muted);text-align:center;margin-top:14px;">
@@ -423,8 +417,10 @@ body {
         <div class="logo-mini">🔧</div>
         <span id="nomeOficinaHeader">Oficina</span>
       </div>
-      <button class="btn-sair" onclick="abrirMeuCadastro()" style="margin-right:6px;">👤 Meu cadastro</button>
-      <button class="btn-sair" onclick="sair()">Sair</button>
+      <div style="display:flex;gap:6px;">
+        <button class="btn-sair" onclick="abrirMeuCadastro()" style="margin-right:2px;">👤 Meu cadastro</button>
+        <button class="btn-sair" onclick="sair()">Sair</button>
+      </div>
     </div>
     <div class="header-greeting" id="header-nome">
       Carregando...
@@ -433,20 +429,11 @@ body {
   </header>
   <div class="home-content">
     <div class="stats-row" id="stats-row">
-      <div class="stat-mini">
-        <div class="num" id="stat-total">—</div>
-        <div class="lbl">Total gasto</div>
-      </div>
-      <div class="stat-mini">
-        <div class="num" id="stat-os">0</div>
-        <div class="lbl">Ordens de serviço</div>
-      </div>
+      <div class="stat-mini"><div class="num" id="stat-total">—</div><div class="lbl">Total gasto</div></div>
+      <div class="stat-mini"><div class="num" id="stat-os">0</div><div class="lbl">Ordens de serviço</div></div>
     </div>
     <div id="home-conteudo">
-      <div class="loading-wrap">
-        <div class="spinner"></div>
-        <span style="font-size:0.82rem;color:var(--muted)">Carregando suas OS...</span>
-      </div>
+      <div class="loading-wrap"><div class="spinner"></div><span style="font-size:0.82rem;color:var(--muted)">Carregando suas OS...</span></div>
     </div>
   </div>
 </div>
@@ -455,10 +442,7 @@ body {
 <div class="overlay" id="overlay-cadastro" onclick="fecharModalCadastro()">
   <div class="modal-sheet" onclick="event.stopPropagation()">
     <div class="modal-drag"></div>
-    <div class="modal-header">
-      <div class="modal-title">Meu cadastro</div>
-      <button class="btn-fechar" onclick="fecharModalCadastro()">✕</button>
-    </div>
+    <div class="modal-header"><div class="modal-title">Meu cadastro</div><button class="btn-fechar" onclick="fecharModalCadastro()">✕</button></div>
     <div class="modal-body" id="modal-cadastro-body"></div>
   </div>
 </div>
@@ -467,10 +451,7 @@ body {
 <div class="overlay" id="overlay-os" onclick="fecharModal()">
   <div class="modal-sheet" onclick="event.stopPropagation()">
     <div class="modal-drag"></div>
-    <div class="modal-header">
-      <div class="modal-title" id="modal-os-titulo">Ordem de Serviço</div>
-      <button class="btn-fechar" onclick="fecharModal()">✕</button>
-    </div>
+    <div class="modal-header"><div class="modal-title" id="modal-os-titulo">Ordem de Serviço</div><button class="btn-fechar" onclick="fecharModal()">✕</button></div>
     <div class="modal-body" id="modal-os-body"></div>
   </div>
 </div>
@@ -480,11 +461,7 @@ body {
   <div class="confirm-box">
     <div class="confirm-icon">✅</div>
     <div class="confirm-title">Aprovar serviço?</div>
-    <div class="confirm-text">
-      Ao aprovar, o mecânico será notificado e iniciará o serviço imediatamente.
-      <br><br>
-      <strong id="confirm-valor"></strong>
-    </div>
+    <div class="confirm-text">Ao aprovar, o mecânico será notificado e iniciará o serviço imediatamente.<br><br><strong id="confirm-valor"></strong></div>
     <div class="confirm-btns">
       <button class="btn-aprovar" onclick="confirmarAprovacao()">✅ Sim, aprovar serviço</button>
       <button class="btn-recusar" onclick="fecharConfirm()">Cancelar</button>
@@ -497,11 +474,7 @@ body {
   <div class="confirm-box">
     <div class="confirm-icon">🚫</div>
     <div class="confirm-title">Recusar orçamento?</div>
-    <div class="confirm-text">
-      Tem certeza que deseja recusar este orçamento? O mecânico será notificado.
-      <br><br>
-      <strong id="recusar-valor"></strong>
-    </div>
+    <div class="confirm-text">Tem certeza que deseja recusar este orçamento? O mecânico será notificado.<br><br><strong id="recusar-valor"></strong></div>
     <div class="confirm-btns">
       <button class="btn-primary" style="background:var(--red);color:#fff;margin-top:0;" id="btn-confirmar-recusar" onclick="confirmarRecusa()">🚫 Sim, recusar orçamento</button>
       <button class="btn-recusar" onclick="fecharRecusar()">Cancelar</button>
@@ -511,6 +484,25 @@ body {
 
 <!-- TOAST -->
 <div class="toast-wrap" id="toastWrap"></div>
+
+<!-- ============================================================
+     CHAT IA — Atendimento Virtual
+     ============================================================ -->
+<button class="ia-fab" id="ia-fab" onclick="toggleChat()" title="Atendimento virtual">🤖</button>
+
+<div class="ia-panel" id="ia-panel">
+  <div class="ia-panel-header">
+    <span>🤖 Atendimento Virtual</span>
+    <button onclick="toggleChat()">✕</button>
+  </div>
+  <div class="ia-msgs" id="ia-msgs">
+    <div class="ia-msg-bot">Olá! Posso te ajudar com informações sobre suas ordens de serviço. O que você quer saber? 😊</div>
+  </div>
+  <div class="ia-input-row">
+    <input type="text" id="ia-input" placeholder="Digite sua pergunta..." onkeydown="if(event.key==='Enter')enviarMsgIA()">
+    <button onclick="enviarMsgIA()">→</button>
+  </div>
+</div>
 
 <script>
 // ============================================================
@@ -522,11 +514,11 @@ let   SCRIPT_URL     = localStorage.getItem(SCRIPT_URL_KEY) || 'https://script.g
 
 const OFICINA_ID = new URLSearchParams(location.search).get('oficinaId') || 'OFLEO';
 
-let clienteLogado = null;
-let ordens        = [];
-let osAtual       = null;
-let osParaAprovar = null;
-let osParaRecusar = null;
+let clienteLogado  = null;
+let ordens         = [];
+let osAtual        = null;
+let osParaAprovar  = null;
+let osParaRecusar  = null;
 
 // ============================================================
 //  INIT
@@ -564,21 +556,14 @@ function mostrarTela(nome) {
 function salvarUrl() {
   const url = document.getElementById('input-script-url').value.trim();
   if (!url.startsWith('https://script.google.com')) { toast('URL inválida. Use a URL do Apps Script', '⚠️'); return; }
-  localStorage.setItem(SCRIPT_URL_KEY, url);
-  SCRIPT_URL = url;
-  mostrarTela('login');
+  localStorage.setItem(SCRIPT_URL_KEY, url); SCRIPT_URL = url; mostrarTela('login');
 }
 
 // ============================================================
 //  ERROS
 // ============================================================
-function mostrarErro(msg, elId) {
-  const el = document.getElementById(elId || 'erro-login');
-  el.textContent = msg; el.classList.add('visivel');
-}
-function esconderErro(elId) {
-  document.getElementById(elId || 'erro-login').classList.remove('visivel');
-}
+function mostrarErro(msg, elId) { const el = document.getElementById(elId||'erro-login'); el.textContent = msg; el.classList.add('visivel'); }
+function esconderErro(elId) { document.getElementById(elId||'erro-login').classList.remove('visivel'); }
 
 // ============================================================
 //  LOGIN
@@ -599,12 +584,10 @@ async function fazerLogin() {
     if (res.precisaTrocarSenha) {
       senhaLoginTemp = senha;
       document.getElementById('pa-origem-box').style.display = res.origemConfirmada ? 'none' : '';
-      mostrarTela('primeiro-acesso');
-      return;
+      mostrarTela('primeiro-acesso'); return;
     }
     localStorage.setItem(CLIENTE_KEY, JSON.stringify(clienteLogado));
-    mostrarTela('home');
-    carregarOrdens();
+    mostrarTela('home'); carregarOrdens();
   } catch(e) {
     mostrarErro('Erro de conexão. Verifique a URL do Apps Script.');
   } finally {
@@ -631,8 +614,7 @@ async function confirmarPrimeiroAcesso() {
   senhaLoginTemp = '';
   toast('Tudo certo! Você já pode usar o app.', '✅');
   localStorage.setItem(CLIENTE_KEY, JSON.stringify(clienteLogado));
-  mostrarTela('home');
-  carregarOrdens();
+  mostrarTela('home'); carregarOrdens();
 }
 
 // ============================================================
@@ -642,10 +624,8 @@ function abrirEsqueciSenha() {
   document.getElementById('esqueci-passo1').style.display = '';
   document.getElementById('esqueci-passo2').style.display = 'none';
   document.getElementById('esqueci-cpf').value = '';
-  esconderErro('erro-esqueci');
-  mostrarTela('esqueci');
+  esconderErro('erro-esqueci'); mostrarTela('esqueci');
 }
-
 async function buscarPerguntaSeguranca() {
   const cpf = document.getElementById('esqueci-cpf').value.trim();
   if (!cpf) { mostrarErro('Informe seu CPF', 'erro-esqueci'); return; }
@@ -656,20 +636,18 @@ async function buscarPerguntaSeguranca() {
   document.getElementById('esqueci-passo2').style.display = '';
   esconderErro('erro-esqueci');
 }
-
 async function confirmarRecuperacaoSenha() {
-  const cpf        = document.getElementById('esqueci-cpf').value.trim();
-  const resposta   = document.getElementById('esqueci-resposta').value.trim();
-  const novaSenha  = document.getElementById('esqueci-nova-senha').value;
-  const novaSenha2 = document.getElementById('esqueci-nova-senha2').value;
+  const cpf       = document.getElementById('esqueci-cpf').value.trim();
+  const resposta  = document.getElementById('esqueci-resposta').value.trim();
+  const novaSenha = document.getElementById('esqueci-nova-senha').value;
+  const novaSenha2= document.getElementById('esqueci-nova-senha2').value;
   if (!resposta) { mostrarErro('Preencha a resposta', 'erro-esqueci'); return; }
   if (novaSenha.length < 4) { mostrarErro('A nova senha precisa ter pelo menos 4 caracteres', 'erro-esqueci'); return; }
   if (novaSenha !== novaSenha2) { mostrarErro('As senhas não coincidem', 'erro-esqueci'); return; }
   const res = await api({ acao: 'recuperarSenhaResetar', cpf, resposta, novaSenha });
   if (res.erro) { mostrarErro(res.erro, 'erro-esqueci'); return; }
   toast('Senha alterada! Faça login com a nova senha.', '✅');
-  document.getElementById('login-cpf').value = cpf;
-  document.getElementById('login-senha').value = '';
+  document.getElementById('login-cpf').value = cpf; document.getElementById('login-senha').value = '';
   mostrarTela('login');
 }
 
@@ -679,63 +657,22 @@ async function confirmarRecuperacaoSenha() {
 function renderHome() {
   document.getElementById('header-nome').childNodes[0].nodeValue = 'Olá, ' + clienteLogado.nome.split(' ')[0] + ' 👋';
   document.getElementById('header-sub').textContent = clienteLogado.cpf;
-
-  const totalGasto = ordens
-    .filter(o => o.status === 'Entregue' || o.status === 'Pronto')
-    .reduce((s, o) => s + parseFloat(o.total || 0), 0);
-
+  const totalGasto = ordens.filter(o => o.status==='Entregue'||o.status==='Pronto').reduce((s,o) => s+parseFloat(o.total||0), 0);
   document.getElementById('stat-total').textContent = 'R$' + totalGasto.toFixed(0);
-  document.getElementById('stat-os').textContent    = ordens.length;
-
+  document.getElementById('stat-os').textContent = ordens.length;
   const conteudo = document.getElementById('home-conteudo');
-
-  if (!ordens.length) {
-    conteudo.innerHTML = `<div class="empty"><div class="empty-icon">📋</div><h3>Nenhuma OS ainda</h3><p>Quando o mecânico abrir uma ordem de serviço para você, ela aparecerá aqui.</p></div>`;
-    return;
-  }
-
-  const pendentes = ordens.filter(o => o.status === 'Orçamento');
+  if (!ordens.length) { conteudo.innerHTML = `<div class="empty"><div class="empty-icon">📋</div><h3>Nenhuma OS ainda</h3><p>Quando o mecânico abrir uma ordem de serviço para você, ela aparecerá aqui.</p></div>`; return; }
+  const pendentes = ordens.filter(o => o.status==='Orçamento');
   let html = '';
-
   if (pendentes.length) {
-    html += `<div>`;
-    pendentes.forEach(os => {
-      html += `
-        <div class="banner-aprovacao" onclick="abrirOS('${os.id}')">
-          <div class="banner-icon">📄</div>
-          <div class="banner-text">
-            <strong>Orçamento aguardando sua aprovação</strong>
-            <span>${os.veiculoModelo} · ${fmt(os.total)}</span>
-          </div>
-          <div class="banner-arrow">→</div>
-        </div>`;
-    });
-    html += `</div>`;
+    html += '<div>';
+    pendentes.forEach(os => { html += `<div class="banner-aprovacao" onclick="abrirOS('${os.id}')"><div class="banner-icon">📄</div><div class="banner-text"><strong>Orçamento aguardando sua aprovação</strong><span>${os.veiculoModelo} · ${fmt(os.total)}</span></div><div class="banner-arrow">→</div></div>`; });
+    html += '</div>';
   }
-
-  html += `<div class="secao-titulo">Histórico de atendimentos</div>`;
-
-  ordens.sort((a, b) => new Date(b.criadoEm) - new Date(a.criadoEm)).forEach(os => {
-    html += `
-      <div class="os-card" onclick="abrirOS('${os.id}')">
-        <div class="os-card-header">
-          <div class="os-veiculo">
-            ${os.veiculoModelo || 'Veículo'}
-            <small>Placa: ${os.veiculoPlaca || '—'}</small>
-          </div>
-          <div>
-            <div class="os-num">#${String(os.id).slice(-6)}</div>
-            <div style="margin-top:5px">${badgeStatus(os.status)}</div>
-          </div>
-        </div>
-        <div class="os-problema">${os.problema || 'Sem descrição'}</div>
-        <div class="os-footer">
-          <div class="os-valor">${fmt(os.total)}</div>
-          <div class="os-data">${fmtData(os.criadoEm)}</div>
-        </div>
-      </div>`;
+  html += '<div class="secao-titulo">Histórico de atendimentos</div>';
+  ordens.sort((a,b) => new Date(b.criadoEm)-new Date(a.criadoEm)).forEach(os => {
+    html += `<div class="os-card" onclick="abrirOS('${os.id}')"><div class="os-card-header"><div class="os-veiculo">${os.veiculoModelo||'Veículo'}<small>Placa: ${os.veiculoPlaca||'—'}</small></div><div><div class="os-num">#${String(os.id).slice(-6)}</div><div style="margin-top:5px">${badgeStatus(os.status)}</div></div></div><div class="os-problema">${os.problema||'Sem descrição'}</div><div class="os-footer"><div class="os-valor">${fmt(os.total)}</div><div class="os-data">${fmtData(os.criadoEm)}</div></div></div>`;
   });
-
   conteudo.innerHTML = html;
 }
 
@@ -747,8 +684,7 @@ async function carregarOrdens() {
   try {
     const res = await api({ acao: 'ordensDoCliente', cpf: clienteLogado.cpf });
     if (res.erro) { toast(res.erro, '⚠️'); return; }
-    ordens = res.ordens || [];
-    renderHome();
+    ordens = res.ordens || []; renderHome();
   } catch(e) {
     toast('Erro ao carregar ordens', '⚠️');
     document.getElementById('home-conteudo').innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><h3>Erro de conexão</h3><p>Não foi possível carregar. Verifique sua internet.</p><button class="btn-primary" style="max-width:200px;margin:16px auto 0" onclick="carregarOrdens()">Tentar novamente</button></div>`;
@@ -759,17 +695,12 @@ async function carregarOrdens() {
 //  MODAL OS
 // ============================================================
 function abrirOS(id) {
-  osAtual = ordens.find(o => String(o.id) === String(id));
-  if (!osAtual) return;
+  osAtual = ordens.find(o => String(o.id)===String(id)); if (!osAtual) return;
   document.getElementById('modal-os-titulo').textContent = 'OS #' + String(osAtual.id).slice(-6);
   document.getElementById('modal-os-body').innerHTML = renderOSBody(osAtual);
   document.getElementById('overlay-os').classList.add('aberto');
 }
-
-function fecharModal() {
-  document.getElementById('overlay-os').classList.remove('aberto');
-  osAtual = null;
-}
+function fecharModal() { document.getElementById('overlay-os').classList.remove('aberto'); osAtual = null; }
 
 // ============================================================
 //  MEU CADASTRO
@@ -779,121 +710,47 @@ async function abrirMeuCadastro() {
   body.innerHTML = '<p style="color:var(--muted);">Carregando...</p>';
   document.getElementById('overlay-cadastro').classList.add('aberto');
   const res = await api({ acao: 'dadosCliente', cpf: clienteLogado.cpf });
-  if (res.erro) { body.innerHTML = '<p style="color:var(--red);">' + res.erro + '</p>'; return; }
-  const c = res.cliente;
-  const v = res.veiculo || {};
-  const campo = (label, valor) => `<div style="margin-bottom:12px;"><div style="font-size:0.72rem;color:var(--muted);">${label}</div><div style="font-weight:600;">${valor || '—'}</div></div>`;
-  body.innerHTML = `
-    <p style="font-size:0.78rem;color:var(--muted);margin-bottom:14px;">Esses dados foram cadastrados pela oficina e não podem ser editados por aqui. Se algo estiver errado, peça ao mecânico pra corrigir.</p>
-    <h3 style="margin:14px 0 8px;">Dados pessoais</h3>
-    ${campo('Nome', c.nome)}${campo('CPF', c.cpf)}${campo('Data de nascimento', c.nasc)}${campo('Telefone', c.tel)}${campo('E-mail', c.email)}${campo('Endereço', c.end)}${campo('Como conheceu a oficina', c.origem)}
-    ${v.placa ? `<h3 style="margin:18px 0 8px;">Veículo</h3>${campo('Placa', v.placa)}${campo('Marca / Modelo', [v.marca, v.modelo].filter(Boolean).join(' / '))}${campo('Ano', v.ano)}${campo('Cor', v.cor)}${campo('Combustível', v.comb)}${campo('Última revisão', v.ultRev ? v.ultRev + ' km em ' + (v.ultRevData||'—') : '—')}${campo('Próxima revisão', v.proxRev ? v.proxRev + ' km até ' + (v.proxRevData||'—') : '—')}` : ''}`;
+  if (res.erro) { body.innerHTML = '<p style="color:var(--red);">'+res.erro+'</p>'; return; }
+  const c = res.cliente; const v = res.veiculo||{};
+  const campo = (label, valor) => `<div style="margin-bottom:12px;"><div style="font-size:0.72rem;color:var(--muted);">${label}</div><div style="font-weight:600;">${valor||'—'}</div></div>`;
+  body.innerHTML = `<p style="font-size:0.78rem;color:var(--muted);margin-bottom:14px;">Esses dados foram cadastrados pela oficina. Se algo estiver errado, peça ao mecânico pra corrigir.</p><h3 style="margin:14px 0 8px;">Dados pessoais</h3>${campo('Nome',c.nome)}${campo('CPF',c.cpf)}${campo('Data de nascimento',c.nasc)}${campo('Telefone',c.tel)}${campo('E-mail',c.email)}${campo('Endereço',c.end)}${campo('Como conheceu a oficina',c.origem)}${v.placa?`<h3 style="margin:18px 0 8px;">Veículo</h3>${campo('Placa',v.placa)}${campo('Marca / Modelo',[v.marca,v.modelo].filter(Boolean).join(' / '))}${campo('Ano',v.ano)}${campo('Cor',v.cor)}${campo('Combustível',v.comb)}${campo('Última revisão',v.ultRev?v.ultRev+' km em '+(v.ultRevData||'—'):'—')}${campo('Próxima revisão',v.proxRev?v.proxRev+' km até '+(v.proxRevData||'—'):'—')}`:''}`;
 }
-
-function fecharModalCadastro() {
-  document.getElementById('overlay-cadastro').classList.remove('aberto');
-}
+function fecharModalCadastro() { document.getElementById('overlay-cadastro').classList.remove('aberto'); }
 
 // ============================================================
 //  RENDER BODY DA OS
 // ============================================================
 function renderOSBody(os) {
-  // Se negado, mostra progresso diferente
   let progressHtml = '';
   if (os.status === 'Negado') {
-    progressHtml = `
-      <div style="display:flex;align-items:center;gap:12px;background:var(--red-bg);border:1px solid var(--red);border-radius:12px;padding:14px 16px;margin:16px 0 24px;">
-        <span style="font-size:1.5rem;">🚫</span>
-        <div>
-          <div style="font-weight:800;color:#991B1B;font-size:0.875rem;">Orçamento recusado</div>
-          <div style="font-size:0.75rem;color:var(--red);">O mecânico foi notificado da recusa.</div>
-        </div>
-      </div>`;
+    progressHtml = `<div style="display:flex;align-items:center;gap:12px;background:var(--red-bg);border:1px solid var(--red);border-radius:12px;padding:14px 16px;margin:16px 0 24px;"><span style="font-size:1.5rem;">🚫</span><div><div style="font-weight:800;color:#991B1B;font-size:0.875rem;">Orçamento recusado</div><div style="font-size:0.75rem;color:var(--red);">O mecânico foi notificado da recusa.</div></div></div>`;
   } else {
-    const steps   = ['Orçamento','Em andamento','Pronto','Entregue'];
-    const stepIdx = steps.indexOf(os.status);
-    progressHtml  = '<div class="status-progress">';
-    steps.forEach((s, i) => {
-      const cls = i < stepIdx ? 'feito' : (i === stepIdx ? 'atual' : '');
-      const dot = i < stepIdx ? '✓' : (i === stepIdx ? '●' : '');
-      progressHtml += `<div class="sp-step ${cls}"><div class="sp-dot">${dot}</div><div class="sp-lbl">${s}</div></div>`;
-    });
+    const steps = ['Orçamento','Em andamento','Pronto','Entregue']; const stepIdx = steps.indexOf(os.status);
+    progressHtml = '<div class="status-progress">';
+    steps.forEach((s,i) => { const cls = i<stepIdx?'feito':(i===stepIdx?'atual':''); const dot = i<stepIdx?'✓':(i===stepIdx?'●':''); progressHtml += `<div class="sp-step ${cls}"><div class="sp-dot">${dot}</div><div class="sp-lbl">${s}</div></div>`; });
     progressHtml += '</div>';
   }
-
-  // Itens
   let itensHtml = '';
   if (os.itens && os.itens.length) {
     itensHtml = '<div class="secao-titulo" style="margin-top:16px">Serviços e peças</div><div class="itens-lista">';
-    os.itens.forEach(item => {
-      const tipo = item.tipo === 'servico' ? 'Serviço' : 'Peça';
-      const cls  = item.tipo === 'servico' ? 'tipo-servico' : 'tipo-peca';
-      itensHtml += `<div class="item-row"><span class="item-tipo ${cls}">${tipo}</span><span class="item-desc">${item.desc}</span><span class="item-qtd">x${item.qtd}</span><span class="item-val">${fmt(item.valorTotal)}</span></div>`;
-    });
+    os.itens.forEach(item => { const tipo = item.tipo==='servico'?'Serviço':'Peça'; const cls = item.tipo==='servico'?'tipo-servico':'tipo-peca'; itensHtml += `<div class="item-row"><span class="item-tipo ${cls}">${tipo}</span><span class="item-desc">${item.desc}</span><span class="item-qtd">x${item.qtd}</span><span class="item-val">${fmt(item.valorTotal)}</span></div>`; });
     itensHtml += '</div>';
   }
-
-  // Botões/badges de ação
   let acaoHtml = '';
   if (os.status === 'Orçamento') {
-    // Mostra botão aprovar E botão recusar
-    acaoHtml = `
-      <div style="margin-top:20px">
-        <button class="btn-aprovar" onclick="pedirConfirmacao('${os.id}')">
-          ✅ Aprovar este orçamento
-        </button>
-        <button class="btn-recusar" onclick="pedirRecusa('${os.id}')">
-          🚫 Recusar este orçamento
-        </button>
-        <p style="font-size:0.72rem;color:var(--muted);text-align:center;margin-top:8px">
-          Ao aprovar, o mecânico iniciará o serviço imediatamente
-        </p>
-      </div>`;
-  } else if (os.status === 'Negado') {
-    acaoHtml = ''; // banner já está no progresso
-  } else if (os.aprovadoEm) {
-    acaoHtml = `
-      <div class="aprovado-badge" style="margin-top:16px">
-        <div class="ab-icon">✅</div>
-        <div class="ab-text">
-          <strong>Serviço aprovado</strong>
-          <span>${fmtData(os.aprovadoEm)}</span>
-        </div>
-      </div>`;
+    acaoHtml = `<div style="margin-top:20px"><button class="btn-aprovar" onclick="pedirConfirmacao('${os.id}')">✅ Aprovar este orçamento</button><button class="btn-recusar" onclick="pedirRecusa('${os.id}')">🚫 Recusar este orçamento</button><p style="font-size:0.72rem;color:var(--muted);text-align:center;margin-top:8px">Ao aprovar, o mecânico iniciará o serviço imediatamente</p></div>`;
+  } else if (os.status !== 'Negado' && os.aprovadoEm) {
+    acaoHtml = `<div class="aprovado-badge" style="margin-top:16px"><div class="ab-icon">✅</div><div class="ab-text"><strong>Serviço aprovado</strong><span>${fmtData(os.aprovadoEm)}</span></div></div>`;
   }
-
-  const obsHtml = os.obs ? `
-    <div class="secao-titulo" style="margin-top:16px">Observações do mecânico</div>
-    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:0.82rem;color:var(--text);line-height:1.5">${os.obs}</div>` : '';
-
-  return `
-    ${progressHtml}
-    <div class="secao-titulo">Informações</div>
-    <div class="info-row"><span class="info-lbl">Veículo</span><span class="info-val">${os.veiculoModelo || '—'}</span></div>
-    <div class="info-row"><span class="info-lbl">Placa</span><span class="info-val">${os.veiculoPlaca || '—'}</span></div>
-    <div class="info-row"><span class="info-lbl">Problema relatado</span><span class="info-val" style="max-width:60%;text-align:right">${os.problema || '—'}</span></div>
-    <div class="info-row"><span class="info-lbl">Abertura</span><span class="info-val">${fmtData(os.criadoEm)}</span></div>
-    ${itensHtml}
-    <div class="os-total"><span class="total-lbl">Total</span><span class="total-val">${fmt(os.total)}</span></div>
-    ${obsHtml}
-    ${acaoHtml}`;
+  const obsHtml = os.obs ? `<div class="secao-titulo" style="margin-top:16px">Observações do mecânico</div><div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:0.82rem;color:var(--text);line-height:1.5">${os.obs}</div>` : '';
+  return `${progressHtml}<div class="secao-titulo">Informações</div><div class="info-row"><span class="info-lbl">Veículo</span><span class="info-val">${os.veiculoModelo||'—'}</span></div><div class="info-row"><span class="info-lbl">Placa</span><span class="info-val">${os.veiculoPlaca||'—'}</span></div><div class="info-row"><span class="info-lbl">Problema relatado</span><span class="info-val" style="max-width:60%;text-align:right">${os.problema||'—'}</span></div><div class="info-row"><span class="info-lbl">Abertura</span><span class="info-val">${fmtData(os.criadoEm)}</span></div>${itensHtml}<div class="os-total"><span class="total-lbl">Total</span><span class="total-val">${fmt(os.total)}</span></div>${obsHtml}${acaoHtml}`;
 }
 
 // ============================================================
 //  APROVAÇÃO
 // ============================================================
-function pedirConfirmacao(osId) {
-  osParaAprovar = osId;
-  const os = ordens.find(o => String(o.id) === String(osId));
-  document.getElementById('confirm-valor').textContent = 'Valor: ' + fmt(os?.total || 0);
-  document.getElementById('overlay-confirm').classList.add('aberto');
-}
-
-function fecharConfirm() {
-  document.getElementById('overlay-confirm').classList.remove('aberto');
-  osParaAprovar = null;
-}
-
+function pedirConfirmacao(osId) { osParaAprovar = osId; const os = ordens.find(o => String(o.id)===String(osId)); document.getElementById('confirm-valor').textContent = 'Valor: '+fmt(os?.total||0); document.getElementById('overlay-confirm').classList.add('aberto'); }
+function fecharConfirm() { document.getElementById('overlay-confirm').classList.remove('aberto'); osParaAprovar = null; }
 async function confirmarAprovacao() {
   if (!osParaAprovar) return;
   const btn = document.querySelector('#overlay-confirm .btn-aprovar');
@@ -901,59 +758,38 @@ async function confirmarAprovacao() {
   try {
     const res = await api({ acao: 'aprovarOrcamento', osId: osParaAprovar, cpf: clienteLogado.cpf });
     if (res.erro) { toast(res.erro, '⚠️'); return; }
-    const os = ordens.find(o => String(o.id) === String(osParaAprovar));
-    if (os) { os.status = 'Em andamento'; os.aprovadoEm = new Date().toISOString(); }
+    const os = ordens.find(o => String(o.id)===String(osParaAprovar));
+    if (os) { os.status='Em andamento'; os.aprovadoEm=new Date().toISOString(); }
     fecharConfirm(); fecharModal(); renderHome();
     toast('Orçamento aprovado! O mecânico já foi notificado. 🎉', '✅');
-  } catch(e) {
-    toast('Erro ao aprovar. Tente novamente.', '⚠️');
-  } finally {
-    btn.classList.remove('loading'); btn.textContent = '✅ Sim, aprovar serviço';
-  }
+  } catch(e) { toast('Erro ao aprovar. Tente novamente.', '⚠️'); }
+  finally { btn.classList.remove('loading'); btn.textContent = '✅ Sim, aprovar serviço'; }
 }
 
 // ============================================================
 //  RECUSA
 // ============================================================
-function pedirRecusa(osId) {
-  osParaRecusar = osId;
-  const os = ordens.find(o => String(o.id) === String(osId));
-  document.getElementById('recusar-valor').textContent = 'Valor: ' + fmt(os?.total || 0);
-  document.getElementById('overlay-recusar').classList.add('aberto');
-}
-
-function fecharRecusar() {
-  document.getElementById('overlay-recusar').classList.remove('aberto');
-  osParaRecusar = null;
-}
-
+function pedirRecusa(osId) { osParaRecusar = osId; const os = ordens.find(o => String(o.id)===String(osId)); document.getElementById('recusar-valor').textContent = 'Valor: '+fmt(os?.total||0); document.getElementById('overlay-recusar').classList.add('aberto'); }
+function fecharRecusar() { document.getElementById('overlay-recusar').classList.remove('aberto'); osParaRecusar = null; }
 async function confirmarRecusa() {
   if (!osParaRecusar) return;
   const btn = document.getElementById('btn-confirmar-recusar');
-  btn.style.opacity = '0.6'; btn.style.pointerEvents = 'none'; btn.textContent = 'Recusando...';
+  btn.style.opacity='0.6'; btn.style.pointerEvents='none'; btn.textContent='Recusando...';
   try {
     const res = await api({ acao: 'recusarOrcamento', osId: osParaRecusar, cpf: clienteLogado.cpf });
     if (res.erro) { toast(res.erro, '⚠️'); return; }
-    const os = ordens.find(o => String(o.id) === String(osParaRecusar));
-    if (os) { os.status = 'Negado'; os.negadoEm = new Date().toISOString(); }
+    const os = ordens.find(o => String(o.id)===String(osParaRecusar));
+    if (os) { os.status='Negado'; os.negadoEm=new Date().toISOString(); }
     fecharRecusar(); fecharModal(); renderHome();
     toast('Orçamento recusado. O mecânico foi notificado.', '🚫');
-  } catch(e) {
-    toast('Erro ao recusar. Tente novamente.', '⚠️');
-  } finally {
-    btn.style.opacity = ''; btn.style.pointerEvents = ''; btn.textContent = '🚫 Sim, recusar orçamento';
-  }
+  } catch(e) { toast('Erro ao recusar. Tente novamente.', '⚠️'); }
+  finally { btn.style.opacity=''; btn.style.pointerEvents=''; btn.textContent='🚫 Sim, recusar orçamento'; }
 }
 
 // ============================================================
 //  SAIR
 // ============================================================
-function sair() {
-  localStorage.removeItem(CLIENTE_KEY);
-  clienteLogado = null; ordens = [];
-  mostrarTela('login');
-  ['login-cpf','login-senha'].forEach(id => document.getElementById(id).value = '');
-}
+function sair() { localStorage.removeItem(CLIENTE_KEY); clienteLogado=null; ordens=[]; mostrarTela('login'); ['login-cpf','login-senha'].forEach(id => document.getElementById(id).value=''); }
 
 // ============================================================
 //  API
@@ -961,55 +797,105 @@ function sair() {
 async function api(dados) {
   try {
     if (dados.oficinaId === undefined) dados.oficinaId = OFICINA_ID;
-    const res = await fetch(SCRIPT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify(dados),
-      redirect: 'follow'
-    });
+    const res = await fetch(SCRIPT_URL, { method:'POST', headers:{'Content-Type':'text/plain'}, body:JSON.stringify(dados), redirect:'follow' });
     return await res.json();
-  } catch(e) {
-    console.error('[api] Erro:', e);
-    return { erro: e.toString() };
-  }
+  } catch(e) { console.error('[api] Erro:', e); return { erro: e.toString() }; }
 }
 
 // ============================================================
 //  HELPERS
 // ============================================================
-function fmt(v) {
-  return 'R$ ' + parseFloat(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+function fmt(v) { return 'R$ '+parseFloat(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtData(iso) { if (!iso) return '—'; return new Date(iso).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'}); }
+function badgeStatus(s) { const map = {'Orçamento':'badge-orcamento','Aprovado':'badge-aprovado','Em andamento':'badge-andamento','Pronto':'badge-pronto','Entregue':'badge-entregue','Negado':'badge-negado'}; return `<span class="badge ${map[s]||'badge-entregue'}">${s}</span>`; }
+function mascCPF(el) { let v = el.value.replace(/\D/g,'').slice(0,11); v = v.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2'); el.value = v; }
+function toast(msg, icon) { icon = icon||'✅'; const el = document.createElement('div'); el.className='toast'; el.innerHTML=`<span>${icon}</span> ${msg}`; document.getElementById('toastWrap').appendChild(el); setTimeout(()=>el.remove(),3500); }
+
+// ============================================================
+//  CHAT IA — Atendimento Virtual
+// ============================================================
+var iaChatAberto    = false;
+var iaChatHistorico = [];
+
+function toggleChat() {
+  iaChatAberto = !iaChatAberto;
+  var panel = document.getElementById('ia-panel');
+  var fab   = document.getElementById('ia-fab');
+  panel.classList.toggle('aberto', iaChatAberto);
+  fab.classList.toggle('aberto', iaChatAberto);
+  if (iaChatAberto) {
+    setTimeout(function() { document.getElementById('ia-input').focus(); }, 100);
+  }
 }
 
-function fmtData(iso) {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+function addMsgChat(role, texto) {
+  var cont  = document.getElementById('ia-msgs');
+  var div   = document.createElement('div');
+  div.className = role === 'assistant' ? 'ia-msg-bot' : 'ia-msg-user';
+  div.textContent = texto;
+  cont.appendChild(div);
+  cont.scrollTop = cont.scrollHeight;
+  return div;
 }
 
-function badgeStatus(s) {
-  const map = {
-    'Orçamento':    'badge-orcamento',
-    'Aprovado':     'badge-aprovado',
-    'Em andamento': 'badge-andamento',
-    'Pronto':       'badge-pronto',
-    'Entregue':     'badge-entregue',
-    'Negado':       'badge-negado',
-  };
-  return `<span class="badge ${map[s] || 'badge-entregue'}">${s}</span>`;
-}
+async function enviarMsgIA() {
+  var input = document.getElementById('ia-input');
+  var texto = input.value.trim();
+  if (!texto) return;
+  input.value = '';
 
-function mascCPF(el) {
-  let v = el.value.replace(/\D/g,'').slice(0,11);
-  v = v.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2');
-  el.value = v;
-}
+  addMsgChat('user', texto);
+  iaChatHistorico.push({ role: 'user', content: texto });
 
-function toast(msg, icon = '✅') {
-  const el = document.createElement('div');
-  el.className = 'toast';
-  el.innerHTML = `<span>${icon}</span> ${msg}`;
-  document.getElementById('toastWrap').appendChild(el);
-  setTimeout(() => el.remove(), 3500);
+  // Indicador de digitando
+  var cont   = document.getElementById('ia-msgs');
+  var typing = document.createElement('div');
+  typing.className = 'ia-msg-typing';
+  typing.textContent = '⏳ Digitando...';
+  cont.appendChild(typing);
+  cont.scrollTop = cont.scrollHeight;
+
+  // Monta contexto das OS do cliente
+  var ordensTexto = ordens.map(function(o) {
+    return 'OS#' + String(o.id).slice(-6) +
+      ' | Status: ' + o.status +
+      ' | Veículo: ' + (o.veiculoModelo||'—') +
+      ' | Problema: ' + (o.problema||'—') +
+      ' | Valor: ' + fmt(o.total) +
+      (o.obs ? ' | Obs mecânico: ' + o.obs : '');
+  }).join('\n');
+
+  var nomeOficina = document.getElementById('nomeOficinaHeader') ? document.getElementById('nomeOficinaHeader').textContent : 'Oficina';
+
+  try {
+    var res = await api({
+      acao:        'ia',
+      feature:     'chat',
+      clienteNome: clienteLogado ? clienteLogado.nome : '',
+      ordens:      ordensTexto,
+      historico:   iaChatHistorico,
+      oficinaNome: nomeOficina
+    });
+
+    typing.remove();
+
+    if (res.erro) {
+      addMsgChat('assistant', '⚠️ Erro: ' + res.erro);
+      return;
+    }
+
+    addMsgChat('assistant', res.resposta);
+    iaChatHistorico.push({ role: 'assistant', content: res.resposta });
+
+    // Mantém histórico em até 10 mensagens
+    if (iaChatHistorico.length > 10) {
+      iaChatHistorico = iaChatHistorico.slice(-10);
+    }
+
+  } catch(e) {
+    typing.remove();
+    addMsgChat('assistant', '⚠️ Erro de conexão. Tente novamente.');
+  }
 }
 </script>
 </body>
