@@ -2981,21 +2981,20 @@ async function syncComNuvem() {
   try {
     const res = await apiNuvem({ acao: 'syncTotal' });
     if (res.ok) {
-      if (res.clientes && res.clientes.length) {
-        clientes = res.clientes;
-        localStorage.setItem('oleo_clientes', JSON.stringify(clientes));
-      }
-      if (res.ordens && res.ordens.length) {
-        ordens = res.ordens;
-        localStorage.setItem('oleo_os', JSON.stringify(ordens));
-      }
+      // Sempre substitui — lista vazia da nuvem também é válida (exclusões devem ser respeitadas)
+      clientes = res.clientes || [];
+      localStorage.setItem('oleo_clientes', JSON.stringify(clientes));
+
+      ordens = res.ordens || [];
+      localStorage.setItem('oleo_os', JSON.stringify(ordens));
+
       renderOS();
       renderClientes();
       refreshDashboard && refreshDashboard();
       carregarInfoOficina();
       toast('Sincronizado com a nuvem! ☁️');
     } else {
-      toast('Erro no sync: ' + (res.erro || 'desconhecido'));
+      toast('Erro no sync: ' + (res.erro || 'desconhecido'), '⚠️');
     }
   } catch(e) {
     toast('Falha na conexão com a nuvem ⚠️');
@@ -3889,22 +3888,28 @@ function editarCliente(idx) {
 async function excluirCliente(idx) {
   if (!confirm('Excluir este cliente?')) return;
   const cliente = clientes[idx];
-  if (!cliente) return;
+  if (!cliente || !cliente.id) { toast('Cliente inválido', '⚠️'); return; }
+
+  toast('Excluindo...', '⏳');
 
   // Remove da nuvem primeiro
   try {
     const res = await apiNuvem({ acao: 'deletarCliente', id: cliente.id });
-    if (res.erro) { toast('Erro ao excluir: ' + res.erro, '⚠️'); return; }
+    if (res.erro) {
+      toast('Erro ao excluir na nuvem: ' + res.erro, '⚠️');
+      return;
+    }
   } catch(e) {
-    toast('Erro de conexão ao excluir', '⚠️'); return;
+    toast('Erro de conexão ao excluir', '⚠️');
+    return;
   }
 
-  // Só remove localmente após confirmar que a nuvem excluiu
-  clientes.splice(idx, 1);
+  // Remove localmente pelo id (mais seguro que índice após operações assíncronas)
+  clientes = clientes.filter(c => String(c.id) !== String(cliente.id));
   localStorage.setItem('oleo_clientes', JSON.stringify(clientes));
   renderClientes();
   refreshDashboard();
-  toast('Cliente removido', '🗑️');
+  toast('Cliente excluído da nuvem com sucesso 🗑️');
 }
 
 function filtrarClientes(q) { renderClientes(q); }
