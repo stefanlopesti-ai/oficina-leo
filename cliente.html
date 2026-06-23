@@ -581,6 +581,7 @@ async function fazerLogin() {
     const res = await api({ acao: 'loginCliente', cpf, senha });
     if (res.erro) { mostrarErro(res.erro); return; }
     clienteLogado = res.cliente;
+    iaChatHistorico = [];
     if (res.precisaTrocarSenha) {
       senhaLoginTemp = senha;
       document.getElementById('pa-origem-box').style.display = res.origemConfirmada ? 'none' : '';
@@ -739,8 +740,8 @@ function renderOSBody(os) {
   let acaoHtml = '';
   if (os.status === 'Orçamento') {
     acaoHtml = `<div style="margin-top:20px"><button class="btn-aprovar" onclick="pedirConfirmacao('${os.id}')">✅ Aprovar este orçamento</button><button class="btn-recusar" onclick="pedirRecusa('${os.id}')">🚫 Recusar este orçamento</button><p style="font-size:0.72rem;color:var(--muted);text-align:center;margin-top:8px">Ao aprovar, o mecânico iniciará o serviço imediatamente</p></div>`;
-  } else if (os.status !== 'Negado' && os.aprovadoEm) {
-    acaoHtml = `<div class="aprovado-badge" style="margin-top:16px"><div class="ab-icon">✅</div><div class="ab-text"><strong>Serviço aprovado</strong><span>${fmtData(os.aprovadoEm)}</span></div></div>`;
+  } else if (['Aprovado','Em andamento','Pronto','Entregue'].includes(os.status)) {
+    acaoHtml = `<div class="aprovado-badge" style="margin-top:16px"><div class="ab-icon">✅</div><div class="ab-text"><strong>Serviço aprovado</strong><span>${os.aprovadoEm ? fmtData(os.aprovadoEm) : ''}</span></div></div>`;
   }
   const obsHtml = os.obs ? `<div class="secao-titulo" style="margin-top:16px">Observações do mecânico</div><div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:0.82rem;color:var(--text);line-height:1.5">${os.obs}</div>` : '';
   return `${progressHtml}<div class="secao-titulo">Informações</div><div class="info-row"><span class="info-lbl">Veículo</span><span class="info-val">${os.veiculoModelo||'—'}</span></div><div class="info-row"><span class="info-lbl">Placa</span><span class="info-val">${os.veiculoPlaca||'—'}</span></div><div class="info-row"><span class="info-lbl">Problema relatado</span><span class="info-val" style="max-width:60%;text-align:right">${os.problema||'—'}</span></div><div class="info-row"><span class="info-lbl">Abertura</span><span class="info-val">${fmtData(os.criadoEm)}</span></div>${itensHtml}<div class="os-total"><span class="total-lbl">Total</span><span class="total-val">${fmt(os.total)}</span></div>${obsHtml}${acaoHtml}`;
@@ -789,7 +790,7 @@ async function confirmarRecusa() {
 // ============================================================
 //  SAIR
 // ============================================================
-function sair() { localStorage.removeItem(CLIENTE_KEY); clienteLogado=null; ordens=[]; mostrarTela('login'); ['login-cpf','login-senha'].forEach(id => document.getElementById(id).value=''); }
+function sair() { localStorage.removeItem(CLIENTE_KEY); clienteLogado=null; ordens=[]; iaChatHistorico=[]; const iaMsgs=document.getElementById('ia-msgs'); if (iaMsgs) iaMsgs.innerHTML='<div class="ia-msg-bot">Olá! Posso te ajudar com informações sobre suas ordens de serviço. O que você quer saber? 😊</div>'; mostrarTela('login'); ['login-cpf','login-senha'].forEach(id => document.getElementById(id).value=''); }
 
 // ============================================================
 //  API
