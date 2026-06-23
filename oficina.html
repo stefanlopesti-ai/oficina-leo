@@ -1325,6 +1325,8 @@ function salvarOS() {
   if (editingOsIdx!==null) { ordens[editingOsIdx]=os; toast('OS atualizada!'); } else { ordens.push(os); toast('OS criada com sucesso!'); }
   localStorage.setItem('oleo_os', JSON.stringify(ordens)); localStorage.setItem('oleo_osCounter', osCounter);
   enviarOrdemNuvem({ id: os.id, clienteId: os.clienteId, clienteNome: os.clienteNome, clienteCpf: cliente.cpf||'', clienteTel: os.clienteTel, veiculoId: cliente.veiculo?.id||'', veiculoPlaca: cliente.veiculo?.placa||'', veiculoModelo: os.veiculo||'', problema: os.descricao||'', status: os.status, total: os.total, criadoEm: os.criadoEm, obs: os.obsAdd||'', itens: os.items.map(i => ({ tipo: i.tipo==='Serviço'?'servico':'peca', desc: i.desc, qtd: i.qty, valorUnit: i.val, valorTotal: i.total })) });
+  const eraOrcamento = os.status === 'Orçamento';
+  if (eraOrcamento) { try { enviarWhatsApp(); } catch(e) { console.error(e); } }
   closeModal('overlayOS'); renderOS(); refreshDashboard();
 }
 
