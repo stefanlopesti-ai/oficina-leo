@@ -2752,6 +2752,10 @@ mark {
       <button class="modal-close" onclick="closeModal('overlayOS')">✕</button>
     </div>
     <div class="modal-body">
+
+      <!-- BANNER dinâmico de aprovação/reprovação pelo cliente -->
+      <div id="os-cliente-banner" style="display:none;border-radius:10px;padding:12px 16px;margin-bottom:14px;align-items:center;gap:12px;font-size:0.88rem;font-weight:700;"></div>
+
       <div class="tab-bar">
         <button class="tab-btn active" onclick="switchTab('os','dados',this)">📋 Dados</button>
         <button class="tab-btn" onclick="switchTab('os','servicos',this)">🔧 Serviços / Peças</button>
@@ -2994,7 +2998,7 @@ async function syncComNuvem() {
       carregarInfoOficina();
       toast('Sincronizado com a nuvem! ☁️');
     } else {
-      toast('Erro no sync: ' + (res.erro || 'desconhecido'), '⚠️');
+      toast('⚠️ Erro no sync: ' + (res.erro || 'desconhecido'));
     }
   } catch(e) {
     toast('Falha na conexão com a nuvem ⚠️');
@@ -3062,8 +3066,24 @@ function iniciarPollingOS() {
 
       // Notifica e atualiza a tela para cada OS que mudou
       alteradas.forEach(os => {
-        const icone = os.status === 'Em andamento' ? '✅' : (os.status === 'Negado' ? '🚫' : '🔔');
-        toast(`${icone} OS #${String(os.id).slice(-6)} — cliente ${os.status === 'Em andamento' ? 'APROVOU' : (os.status === 'Negado' ? 'RECUSOU' : 'atualizou para: ' + os.status)} o orçamento`, 3500);
+        if (os.status === 'Em andamento' || os.status === 'Negado') {
+          const aprovado = os.status === 'Em andamento';
+          // Toast persistente (10s) com botão para abrir a OS
+          const toastWrap = document.getElementById('toastWrap');
+          const el = document.createElement('div');
+          el.className = 'toast';
+          el.style.cssText = `display:flex;justify-content:space-between;align-items:center;gap:12px;background:${aprovado ? '#065F46' : '#7F1D1D'};`;
+          el.innerHTML = `
+            <span>${aprovado ? '✅' : '🚫'} <b>OS #${String(os.id).slice(-6)}</b> — cliente <b>${aprovado ? 'APROVOU' : 'RECUSOU'}</b> o orçamento!</span>
+            <button onclick="navigate('os');setTimeout(()=>editarOS('${os.id}'),100);this.closest('.toast').remove();"
+              style="background:rgba(255,255,255,0.2);color:#fff;border:1px solid rgba(255,255,255,0.4);border-radius:8px;padding:5px 10px;font-weight:700;cursor:pointer;font-size:0.8rem;white-space:nowrap;">
+              Ver OS →
+            </button>`;
+          toastWrap.appendChild(el);
+          setTimeout(() => { if (el.parentNode) el.remove(); }, 10000);
+        } else {
+          toast(`🔔 OS #${String(os.id).slice(-6)} — status atualizado para: ${os.status}`, 4000);
+        }
       });
 
       if (alteradas.length > 0) {
@@ -3609,12 +3629,12 @@ document.querySelectorAll('.overlay').forEach(o => {
 });
 
 /* -------- TOAST -------- */
-function toast(msg, icon = '✅') {
+function toast(msg, duration = 3200) {
   const el = document.createElement('div');
   el.className = 'toast';
-  el.innerHTML = `<span>${icon}</span> ${msg}`;
+  el.innerHTML = `<span>${msg}</span>`;
   document.getElementById('toastContainer').appendChild(el);
-  setTimeout(() => el.remove(), 3200);
+  setTimeout(() => { if (el.parentNode) el.remove(); }, duration);
 }
 
 /* -------- MASKS -------- */
@@ -3652,7 +3672,7 @@ function calcularProximaRevisao() {
 async function resetarSenhaClienteAtual() {
   if (editingClienteIdx === null) return;
   const c = clientes[editingClienteIdx];
-  if (!c.cpf) { toast('Esse cliente não tem CPF cadastrado', '⚠️'); return; }
+  if (!c.cpf) { toast('⚠️ Esse cliente não tem CPF cadastrado'); return; }
   if (!confirm(`Resetar a senha de ${c.nome} pra "123456"? Ele vai precisar trocar no próximo login.`)) return;
 
   const res = await apiNuvem({ acao: 'mecanicoResetarSenhaCliente', cpf: c.cpf });
@@ -3793,7 +3813,7 @@ document.addEventListener('click', function(e) {
 async function salvarCliente() {
   const nome = document.getElementById('cli-nome').value.trim();
   const tel  = document.getElementById('cli-tel').value.trim();
-  if (!nome || !tel) { toast('Preencha nome e telefone', '⚠️'); return; }
+  if (!nome || !tel) { toast('⚠️ Preencha nome e telefone'); return; }
 
   const ehNovo = editingClienteIdx === null;
   const cpfDigitado = document.getElementById('cli-cpf').value.replace(/\D/g, '');
@@ -3803,7 +3823,7 @@ async function salvarCliente() {
       if (!ehNovo && i === editingClienteIdx) return false; // ignora o próprio cliente sendo editado
       return (c.cpf || '').replace(/\D/g, '') === cpfDigitado;
     });
-    if (cpfDuplicado) { toast('Já existe um cliente cadastrado com esse CPF', '⚠️'); return; }
+    if (cpfDuplicado) { toast('⚠️ Já existe um cliente cadastrado com esse CPF'); return; }
   }
 
   const cliente = {
@@ -3888,19 +3908,19 @@ function editarCliente(idx) {
 async function excluirCliente(idx) {
   if (!confirm('Excluir este cliente?')) return;
   const cliente = clientes[idx];
-  if (!cliente || !cliente.id) { toast('Cliente inválido', '⚠️'); return; }
+  if (!cliente || !cliente.id) { toast('⚠️ Cliente inválido'); return; }
 
-  toast('Excluindo...', '⏳');
+  toast('⏳ Excluindo...');
 
   // Remove da nuvem primeiro
   try {
     const res = await apiNuvem({ acao: 'deletarCliente', id: cliente.id });
     if (res.erro) {
-      toast('Erro ao excluir na nuvem: ' + res.erro, '⚠️');
+      toast('⚠️ Erro ao excluir na nuvem: ' + res.erro);
       return;
     }
   } catch(e) {
-    toast('Erro de conexão ao excluir', '⚠️');
+    toast('⚠️ Erro de conexão ao excluir');
     return;
   }
 
@@ -4033,7 +4053,7 @@ function calcTotal() {
 function salvarOS() {
   const clienteId = parseInt(document.getElementById('os-cliente').value);
   const cliente = clientes.find(c => c.id === clienteId);
-  if (!cliente) { toast('Selecione um cliente', '⚠️'); return; }
+  if (!cliente) { toast('⚠️ Selecione um cliente'); return; }
 
   const items = [];
   document.querySelectorAll('#itemsTbody tr').forEach(tr => {
@@ -4045,31 +4065,35 @@ function salvarOS() {
     if (desc) items.push({ desc, tipo, qty, val, total: qty * val });
   });
 
+  const veiculo     = document.getElementById('os-veiculo').value;
+  const km          = document.getElementById('os-km').value;
+  const dataEntrada = document.getElementById('os-data-entrada').value;
+
   const os = {
-    id:          editingOsIdx !== null ? ordens[editingOsIdx].id : (osCounter++),
+    id:           editingOsIdx !== null ? ordens[editingOsIdx].id : (osCounter++),
     clienteId,
-    clienteNome: cliente.nome,
-    clienteTel:  cliente.tel,
-    veiculo:     document.getElementById('os-veiculo').value,
-    veiculoObj:  cliente.veiculo,
-    status:      document.getElementById('os-status').value,
-    dataEntrada: document.getElementById('os-data-entrada').value,
-    previsao:    document.getElementById('os-previsao').value,
-    km:          document.getElementById('os-km').value,
-    descricao:   document.getElementById('os-descricao').value,
-    diagnostico: document.getElementById('os-diagnostico').value,
-    obsAdd:      document.getElementById('os-obs-add').value,
+    clienteNome:  cliente.nome,
+    clienteTel:   cliente.tel,
+    veiculo,
+    veiculoObj:   cliente.veiculo,
+    veiculoPlaca: cliente.veiculo?.placa || '',
+    veiculoModelo: veiculo,
+    status:       document.getElementById('os-status').value,
+    dataEntrada,
+    previsao:     document.getElementById('os-previsao').value,
+    km,
+    descricao:    document.getElementById('os-descricao').value,
+    diagnostico:  document.getElementById('os-diagnostico').value,
+    obsAdd:       document.getElementById('os-obs-add').value,
     items,
-    total:       calcTotal(),
-    criadoEm:   editingOsIdx !== null ? ordens[editingOsIdx].criadoEm : new Date().toISOString(),
+    total:        calcTotal(),
+    criadoEm:    editingOsIdx !== null ? ordens[editingOsIdx].criadoEm : new Date().toISOString(),
   };
 
   if (editingOsIdx !== null) {
     ordens[editingOsIdx] = os;
-    toast('OS atualizada!');
   } else {
     ordens.push(os);
-    toast('OS criada com sucesso!');
   }
 
   localStorage.setItem('oleo_os', JSON.stringify(ordens));
@@ -4084,7 +4108,7 @@ function salvarOS() {
     clienteTel:    os.clienteTel,
     veiculoId:     cliente.veiculo?.id || '',
     veiculoPlaca:  cliente.veiculo?.placa || '',
-    veiculoModelo: os.veiculo || '',
+    veiculoModelo: veiculo,
     problema:      os.descricao || '',
     status:        os.status,
     total:         os.total,
@@ -4102,6 +4126,36 @@ function salvarOS() {
   closeModal('overlayOS');
   renderOS();
   refreshDashboard();
+
+  // Pergunta se quer enviar WhatsApp imediatamente após salvar
+  const tel = (cliente.tel || '').replace(/\D/g, '');
+  if (tel) {
+    const v = cliente.veiculo || {};
+    const vStr = [v.marca, v.modelo, v.placa].filter(Boolean).join(' — ');
+    const cfg = { nome: localStorage.getItem('oleo_cfg_nome') || 'Oficina' };
+    const total = os.total;
+    const statusMsg = {
+      'Orçamento':    `Olá, *${cliente.nome}*! 👋\n\nSegue o *orçamento #${os.id}* do seu veículo *${vStr}* aqui na *${cfg.nome}*.\n\n💰 *Total: R$ ${total.toFixed(2).replace('.',',')}*\n\nAguardamos sua aprovação para iniciar o serviço. Qualquer dúvida, estamos à disposição! 🔧`,
+      'Aprovado':     `Olá, *${cliente.nome}*! ✅\n\nOrçamento *#${os.id}* aprovado! Já iniciamos os trabalhos no seu *${vStr}*.\n\nAvisaremos assim que ficar pronto. 🔧`,
+      'Em andamento': `Olá, *${cliente.nome}*! ⚙️\n\nSeu veículo *${vStr}* está em serviço aqui na *${cfg.nome}* (OS #${os.id}).\n\nAvisaremos assim que estiver pronto!`,
+      'Pronto':       `Olá, *${cliente.nome}*! 🎉\n\nSeu veículo *${vStr}* está *PRONTO* para retirada aqui na *${cfg.nome}*!\n\n💰 *Total: R$ ${total.toFixed(2).replace('.',',')}*\n\nAguardamos você! 😊`,
+      'Entregue':     `Olá, *${cliente.nome}*! Obrigado por confiar na *${cfg.nome}*! 🙏\n\nSeu veículo *${vStr}* foi entregue com sucesso.\n\nVolte sempre! 🔧`,
+      'Negado':       `Olá, *${cliente.nome}*! Recebemos a informação de que o orçamento *#${os.id}* foi recusado.\n\nFique à vontade para nos contatar se mudar de ideia. 🔧`,
+    };
+    const msg = statusMsg[os.status] || statusMsg['Em andamento'];
+    const url = `https://wa.me/55${tel}?text=${encodeURIComponent(msg)}`;
+
+    // Toast com botão de ação para abrir WhatsApp
+    const toastWrap = document.getElementById('toastWrap');
+    const el = document.createElement('div');
+    el.className = 'toast';
+    el.style.cssText = 'display:flex;justify-content:space-between;align-items:center;gap:12px;';
+    el.innerHTML = `<span>✅ OS salva!</span><button onclick="window.open('${url}','_blank')" style="background:#25D366;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-weight:700;cursor:pointer;font-size:0.82rem;white-space:nowrap;">📱 Enviar WhatsApp</button>`;
+    toastWrap.appendChild(el);
+    setTimeout(() => el.remove(), 8000); // fica 8 segundos para o mecânico clicar
+  } else {
+    toast('OS salva com sucesso! ✅');
+  }
 }
 
 function filtroStatus(status, btn) {
@@ -4160,28 +4214,60 @@ function editarOS(id) {
   populateClienteSelect();
   document.getElementById('os-cliente').value = os.clienteId;
   onClienteChange();
-  document.getElementById('os-veiculo').value = os.veiculo;
-  document.getElementById('os-status').value  = os.status;
-  document.getElementById('os-data-entrada').value = os.dataEntrada || '';
-  document.getElementById('os-previsao').value     = os.previsao || '';
-  document.getElementById('os-km').value           = os.km || '';
-  document.getElementById('os-descricao').value    = os.descricao || '';
-  document.getElementById('os-diagnostico').value  = os.diagnostico || '';
-  document.getElementById('os-obs-add').value      = os.obsAdd || '';
-  // items
+
+  // veiculo: campo local é 'veiculo', da nuvem é 'veiculoModelo'
+  document.getElementById('os-veiculo').value       = os.veiculo || os.veiculoModelo || '';
+  document.getElementById('os-status').value        = os.status || 'Orçamento';
+  // dataEntrada: campo local é 'dataEntrada', da nuvem não existe — usa criadoEm como fallback
+  document.getElementById('os-data-entrada').value  = os.dataEntrada || (os.criadoEm ? os.criadoEm.slice(0,10) : '');
+  document.getElementById('os-previsao').value      = os.previsao || '';
+  // km: campo local é 'km', da nuvem não existe — preserva se vier do local
+  document.getElementById('os-km').value            = os.km || '';
+  // descricao: campo local é 'descricao', da nuvem é 'problema'
+  document.getElementById('os-descricao').value     = os.descricao || os.problema || '';
+  document.getElementById('os-diagnostico').value   = os.diagnostico || '';
+  // obsAdd: campo local é 'obsAdd', da nuvem é 'obs'
+  document.getElementById('os-obs-add').value       = os.obsAdd || os.obs || '';
+
+  // items: campo local é 'items', da nuvem é 'itens'
+  const itemsData = os.items || (os.itens || []).map(i => ({
+    desc: i.desc,
+    tipo: i.tipo === 'servico' ? 'Serviço' : 'Peça',
+    qty:  i.qtd,
+    val:  i.valorUnit,
+    total: i.valorTotal
+  }));
+
   document.getElementById('itemsTbody').innerHTML = '';
-  (os.items || []).forEach(item => {
+  itemsData.forEach(item => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td><input type="text" value="${item.desc}"></td>
+      <td><input type="text" value="${item.desc || ''}"></td>
       <td><select style="padding:6px 4px;font-size:0.82rem"><option>Serviço</option><option>Peça</option></select></td>
-      <td><input type="number" value="${item.qty}" min="1" oninput="calcTotal()" style="width:60px"></td>
-      <td><input type="number" value="${item.val}" step="0.01" oninput="calcTotal()"></td>
+      <td><input type="number" value="${item.qty || 1}" min="1" oninput="calcTotal()" style="width:60px"></td>
+      <td><input type="number" value="${item.val || 0}" step="0.01" oninput="calcTotal()"></td>
       <td><button class="remove-row" onclick="this.closest('tr').remove();calcTotal()">✕</button></td>`;
-    tr.querySelector('select').value = item.tipo;
+    tr.querySelector('select').value = item.tipo || 'Serviço';
     document.getElementById('itemsTbody').appendChild(tr);
   });
   calcTotal();
+
+  // Banner de aprovação/reprovação pelo cliente
+  const banner = document.getElementById('os-cliente-banner');
+  if (os.status === 'Em andamento' && os.aprovadoEm) {
+    const quem   = os.aprovadoPor ? ` pelo CPF ${os.aprovadoPor}` : '';
+    const quando = os.aprovadoEm ? ' em ' + new Date(os.aprovadoEm).toLocaleString('pt-BR') : '';
+    banner.style.cssText = 'display:flex;border-radius:10px;padding:12px 16px;margin-bottom:14px;align-items:center;gap:12px;font-size:0.88rem;font-weight:700;background:#D1FAE5;border:1.5px solid #10B981;color:#065F46;';
+    banner.innerHTML = `<span style="font-size:1.4rem;">✅</span><span>Orçamento <b>APROVADO pelo cliente</b>${quem}${quando}.</span>`;
+  } else if (os.status === 'Negado') {
+    const quando = os.atualizadoEm ? ' em ' + new Date(os.atualizadoEm).toLocaleString('pt-BR') : '';
+    banner.style.cssText = 'display:flex;border-radius:10px;padding:12px 16px;margin-bottom:14px;align-items:center;gap:12px;font-size:0.88rem;font-weight:700;background:#FEE2E2;border:1.5px solid #EF4444;color:#991B1B;';
+    banner.innerHTML = `<span style="font-size:1.4rem;">🚫</span><span>Orçamento <b>RECUSADO pelo cliente</b>${quando}.</span>`;
+  } else {
+    banner.style.display = 'none';
+    banner.innerHTML = '';
+  }
+
   resetTab('os','dados');
   openModal('overlayOS');
 }
@@ -4190,7 +4276,7 @@ function editarOS(id) {
 function gerarPDF() {
   const clienteId = parseInt(document.getElementById('os-cliente').value);
   const cliente = clientes.find(c => c.id === clienteId);
-  if (!cliente) { toast('Selecione um cliente para gerar PDF', '⚠️'); return; }
+  if (!cliente) { toast('⚠️ Selecione um cliente para gerar PDF'); return; }
 
   const cfg = {
     nome:     localStorage.getItem('oleo_cfg_nome') || 'Oficina do Léo',
@@ -4306,16 +4392,16 @@ ${diagnostico ? `<div class="section"><div class="section-title">Diagnóstico t�
   const win = window.open('', '_blank');
   win.document.write(html);
   win.document.close();
-  toast('PDF gerado — janela de impressão aberta!', '📄');
+  toast('📄 PDF gerado — janela de impressão aberta!');
 }
 
 /* -------- WHATSAPP -------- */
 function enviarWhatsApp() {
   const clienteId = parseInt(document.getElementById('os-cliente').value);
   const cliente = clientes.find(c => c.id === clienteId);
-  if (!cliente) { toast('Selecione um cliente primeiro', '⚠️'); return; }
+  if (!cliente) { toast('⚠️ Selecione um cliente primeiro'); return; }
   const tel = cliente.tel.replace(/\D/g, '');
-  if (!tel) { toast('Este cliente não tem telefone cadastrado', '⚠️'); return; }
+  if (!tel) { toast('⚠️ Este cliente não tem telefone cadastrado'); return; }
 
   const cfg = {
     nome: localStorage.getItem('oleo_cfg_nome') || 'Oficina do Léo',
@@ -4337,7 +4423,7 @@ function enviarWhatsApp() {
   const msg = statusMsg[status] || statusMsg['Em andamento'];
   const url = `https://wa.me/55${tel}?text=${encodeURIComponent(msg)}`;
   window.open(url, '_blank');
-  toast('Abrindo WhatsApp...', '📱');
+  toast('📱 Abrindo WhatsApp...');
 }
 
 /* -------- DASHBOARD -------- */
@@ -4468,10 +4554,10 @@ function selecionarHora(h) {
 function salvarAgendamento() {
   const clienteId = parseInt(document.getElementById('ag-cliente').value);
   const cliente = clientes.find(c => c.id === clienteId);
-  if (!cliente) { toast('Selecione um cliente', '⚠️'); return; }
-  if (!agSelectedTime) { toast('Selecione um horário', '⚠️'); return; }
+  if (!cliente) { toast('⚠️ Selecione um cliente'); return; }
+  if (!agSelectedTime) { toast('⚠️ Selecione um horário'); return; }
   const data = document.getElementById('ag-data').value;
-  if (!data) { toast('Selecione uma data', '⚠️'); return; }
+  if (!data) { toast('⚠️ Selecione uma data'); return; }
 
   agendamentos.push({
     id: Date.now(),
@@ -4490,7 +4576,7 @@ function salvarAgendamento() {
   closeModal('overlayAgendamento');
   renderCalendario();
   if (calSelectedDate === data) renderAgendaDia(data);
-  toast('Agendamento salvo!', '📅');
+  toast('📅 Agendamento salvo!');
   refreshDashboard();
 }
 
