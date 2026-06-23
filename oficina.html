@@ -842,8 +842,53 @@ mark{background:var(--accent-light);color:var(--text);border-radius:2px;padding:
       <button class="btn btn-whatsapp" onclick="enviarWhatsApp()" title="Enviar via WhatsApp">📱 WhatsApp</button>
       <button class="btn btn-primary" onclick="salvarOS()">Salvar OS</button>
     </div>
+
+<!-- MODAL: ENCERRAMENTO DE OS (Pagamento + Assinaturas + PDF) -->
+<div class="overlay" id="overlayEncerrar">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header"><span class="modal-title">📦 Encerrar OS — Entrega do veículo</span><button class="modal-close" onclick="closeModal('overlayEncerrar')">✕</button></div>
+    <div class="modal-body">
+      <div style="background:var(--accent-light);border:1px solid var(--accent);border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:0.86rem;">
+        <div style="font-weight:800;margin-bottom:4px" id="enc-titulo">OS #—</div>
+        <div style="color:var(--text-muted)">Total da OS: <strong id="enc-total" style="color:var(--text)">R$ 0,00</strong></div>
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>Status do pagamento *</label>
+        <select id="enc-pagto" onchange="encAtualizarValores()">
+          <option value="Pago">✅ Pago integralmente</option>
+          <option value="Parcial">⚠️ Pagamento parcial (faltou valor)</option>
+          <option value="NaoPago">🚫 Não pago</option>
+        </select>
+      </div>
+      <div class="form-grid cols-2" style="margin-bottom:12px">
+        <div class="form-group"><label>Valor pago (R$)</label><input type="number" step="0.01" id="enc-valor-pago" oninput="encAtualizarValores()"></div>
+        <div class="form-group"><label>Falta (R$)</label><input type="number" step="0.01" id="enc-valor-falta" readonly style="background:var(--surface2)"></div>
+      </div>
+      <div class="form-group" style="margin-bottom:14px"><label>Forma de pagamento</label><select id="enc-forma"><option>Dinheiro</option><option>Pix</option><option>Cartão de débito</option><option>Cartão de crédito</option><option>Transferência</option><option>Outro</option></select></div>
+      <div class="form-group" style="margin-bottom:14px"><label>Observação da entrega</label><textarea id="enc-obs" rows="2" placeholder="Ex.: Cliente combinou pagar o restante até sexta..."></textarea></div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div>
+          <label style="font-size:0.72rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px">Assinatura do cliente</label>
+          <canvas id="sigCliente" width="260" height="120" style="display:block;width:100%;height:120px;border:1.5px dashed var(--border);border-radius:8px;background:#fff;touch-action:none;margin-top:5px"></canvas>
+          <button type="button" class="btn btn-outline" style="font-size:0.72rem;padding:4px 10px;margin-top:4px" onclick="limparAssinatura('sigCliente')">Limpar</button>
+        </div>
+        <div>
+          <label style="font-size:0.72rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px">Assinatura do mecânico</label>
+          <canvas id="sigMecanico" width="260" height="120" style="display:block;width:100%;height:120px;border:1.5px dashed var(--border);border-radius:8px;background:#fff;touch-action:none;margin-top:5px"></canvas>
+          <button type="button" class="btn btn-outline" style="font-size:0.72rem;padding:4px 10px;margin-top:4px" onclick="limparAssinatura('sigMecanico')">Limpar</button>
+        </div>
+      </div>
+      <p style="font-size:0.72rem;color:var(--text-muted);margin-top:10px">Assine com o dedo (mobile) ou mouse. As assinaturas serão impressas no PDF salvo no celular.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('overlayEncerrar')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarEncerramento()">✅ Encerrar OS e gerar PDF</button>
+    </div>
   </div>
 </div>
+
+
 
 <!-- MODAL: NOVO AGENDAMENTO -->
 <div class="overlay" id="overlayAgendamento">
@@ -995,8 +1040,9 @@ function iniciarPollingOS() {
       });
       if (mudou) localStorage.setItem('oleo_os', JSON.stringify(ordens));
       alteradas.forEach(os => {
-        const icone = os.status === 'Em andamento' ? '✅' : (os.status === 'Negado' ? '🚫' : '🔔');
-        toast(`${icone} OS #${String(os.id).slice(-6)} — cliente ${os.status === 'Em andamento' ? 'APROVOU' : (os.status === 'Negado' ? 'RECUSOU' : 'atualizou para: ' + os.status)} o orçamento`);
+        const ic = os.status === 'Aprovado' ? '✅' : (os.status === 'Em andamento' ? '⚙️' : (os.status === 'Negado' ? '🚫' : (os.status === 'Pronto' ? '🚗' : '🔔')));
+        const acao = os.status === 'Aprovado' ? 'APROVOU o orçamento' : (os.status === 'Negado' ? 'RECUSOU o orçamento' : 'atualizou para: ' + os.status);
+        toast(`${ic} OS #${String(os.id).slice(-6)} — cliente ${acao}`);
       });
       if (alteradas.length > 0) { renderOS(); refreshDashboard && refreshDashboard(); }
     } catch(e) {}
@@ -1321,12 +1367,37 @@ function salvarOS() {
   const clienteId = document.getElementById('os-cliente').value; const cliente = clientes.find(c => String(c.id) === String(clienteId));
   if (!cliente) { toast('Selecione um cliente', '⚠️'); return; }
   const items = []; document.querySelectorAll('#itemsTbody tr').forEach(tr => { const desc = tr.querySelector('input[type="text"]')?.value||''; const tipo = tr.querySelector('select')?.value||'Serviço'; const inputs = tr.querySelectorAll('input[type="number"]'); const qty = parseFloat(inputs[0]?.value)||1; const val = parseFloat(inputs[1]?.value)||0; if (desc) items.push({ desc, tipo, qty, val, total: qty*val }); });
-  const os = { id: editingOsIdx!==null?ordens[editingOsIdx].id:(osCounter++), clienteId, clienteNome: cliente.nome, clienteTel: cliente.tel, veiculo: document.getElementById('os-veiculo').value, veiculoObj: cliente.veiculo, status: document.getElementById('os-status').value, dataEntrada: document.getElementById('os-data-entrada').value, previsao: document.getElementById('os-previsao').value, km: document.getElementById('os-km').value, descricao: document.getElementById('os-descricao').value, diagnostico: document.getElementById('os-diagnostico').value, obsAdd: document.getElementById('os-obs-add').value, items, total: calcTotal(), criadoEm: editingOsIdx!==null?ordens[editingOsIdx].criadoEm:new Date().toISOString() };
-  if (editingOsIdx!==null) { ordens[editingOsIdx]=os; toast('OS atualizada!'); } else { ordens.push(os); toast('OS criada com sucesso!'); }
+  const statusAntigo = editingOsIdx!==null ? ordens[editingOsIdx].status : null;
+  const os = { id: editingOsIdx!==null?ordens[editingOsIdx].id:(osCounter++), clienteId, clienteNome: cliente.nome, clienteTel: cliente.tel, veiculo: document.getElementById('os-veiculo').value, veiculoObj: cliente.veiculo, status: document.getElementById('os-status').value, dataEntrada: document.getElementById('os-data-entrada').value, previsao: document.getElementById('os-previsao').value, km: document.getElementById('os-km').value, descricao: document.getElementById('os-descricao').value, diagnostico: document.getElementById('os-diagnostico').value, obsAdd: document.getElementById('os-obs-add').value, items, total: calcTotal(), criadoEm: editingOsIdx!==null?ordens[editingOsIdx].criadoEm:new Date().toISOString(), encerramento: editingOsIdx!==null?ordens[editingOsIdx].encerramento:null };
+  if (editingOsIdx!==null) { ordens[editingOsIdx]=os; } else { ordens.push(os); }
   localStorage.setItem('oleo_os', JSON.stringify(ordens)); localStorage.setItem('oleo_osCounter', osCounter);
   enviarOrdemNuvem({ id: os.id, clienteId: os.clienteId, clienteNome: os.clienteNome, clienteCpf: cliente.cpf||'', clienteTel: os.clienteTel, veiculoId: cliente.veiculo?.id||'', veiculoPlaca: cliente.veiculo?.placa||'', veiculoModelo: os.veiculo||'', problema: os.descricao||'', status: os.status, total: os.total, criadoEm: os.criadoEm, obs: os.obsAdd||'', itens: os.items.map(i => ({ tipo: i.tipo==='Serviço'?'servico':'peca', desc: i.desc, qtd: i.qty, valorUnit: i.val, valorTotal: i.total })) });
-  const eraOrcamento = os.status === 'Orçamento';
-  if (eraOrcamento) { try { enviarWhatsApp(); } catch(e) { console.error(e); } }
+
+  // Notifica o app do cliente (mesma máquina) em tempo real
+  bcPushStatusMec(os.id, os.status);
+
+  const novaOS = editingOsIdx===null;
+  const mudouStatus = statusAntigo !== null && statusAntigo !== os.status;
+
+  // Fluxo: nova OS em Orçamento → manda orçamento por WhatsApp
+  if (novaOS && os.status === 'Orçamento') {
+    toast('OS criada! Enviando orçamento por WhatsApp...');
+    try { enviarWhatsApp(); } catch(e) { console.error(e); }
+  }
+  // Fluxo: status mudou para "Pronto" → manda mensagem de "pronto p/ retirada" no WhatsApp
+  else if (mudouStatus && os.status === 'Pronto') {
+    toast('OS marcada como PRONTA! Avisando o cliente via WhatsApp...','🚗');
+    try { enviarWhatsApp(); } catch(e) { console.error(e); }
+  }
+  // Fluxo: status mudou para "Entregue" → abre modal de encerramento (pagamento + assinaturas + PDF)
+  else if (mudouStatus && os.status === 'Entregue') {
+    renderOS(); refreshDashboard();
+    abrirEncerramento(os.id);
+    return; // não fecha overlayOS — abrirEncerramento gerencia o fluxo
+  } else {
+    toast(novaOS ? 'OS criada com sucesso!' : 'OS atualizada!');
+  }
+
   closeModal('overlayOS'); renderOS(); refreshDashboard();
 }
 
@@ -1565,6 +1636,186 @@ async function iaResumoHistorico(btn) {
   const cfgEnd = localStorage.getItem('oleo_cfg_end'); if (cfgEnd) document.getElementById('cfgEnderecoOficina').value = cfgEnd;
   refreshDashboard();
 })();
+
+/* ============================================================
+ *  SINCRONIZAÇÃO COM APP DO CLIENTE (BroadcastChannel)
+ * ============================================================ */
+let bcOficinaMec = null;
+try {
+  bcOficinaMec = new BroadcastChannel('oficina_leo_sync');
+  bcOficinaMec.onmessage = (ev) => {
+    const m = ev.data || {};
+    if (m.tipo === 'statusOS') {
+      const idx = ordens.findIndex(o => String(o.id) === String(m.osId));
+      if (idx >= 0 && ordens[idx].status !== m.status) {
+        ordens[idx].status = m.status;
+        if (m.status === 'Aprovado') ordens[idx].aprovadoEm = new Date().toISOString();
+        if (m.status === 'Negado')   ordens[idx].negadoEm   = new Date().toISOString();
+        localStorage.setItem('oleo_os', JSON.stringify(ordens));
+        const ic = m.status === 'Aprovado' ? '✅' : (m.status === 'Negado' ? '🚫' : '🔔');
+        toast(`${ic} OS #${String(m.osId).slice(-6)} — cliente ${m.status === 'Aprovado' ? 'APROVOU o orçamento' : (m.status === 'Negado' ? 'RECUSOU o orçamento' : 'atualizou para ' + m.status)}`);
+        // Se o modal da OS estiver aberto, reflete o novo status
+        if (editingOsIdx === idx) {
+          const sel = document.getElementById('os-status'); if (sel) sel.value = m.status;
+        }
+        renderOS(); refreshDashboard && refreshDashboard();
+      }
+    }
+  };
+} catch(e) { /* navegador sem BroadcastChannel */ }
+function bcPushStatusMec(osId, status, extra) {
+  try { bcOficinaMec && bcOficinaMec.postMessage({ tipo:'statusOS', osId, status, ...(extra||{}) }); } catch(e){}
+}
+
+/* ============================================================
+ *  ASSINATURAS (canvas) + ENCERRAMENTO + PDF FINAL
+ * ============================================================ */
+function _initSignatureCanvas(id) {
+  const cv = document.getElementById(id); if (!cv) return;
+  // ajusta DPR p/ traços nítidos
+  const ratio = window.devicePixelRatio || 1;
+  const rect = cv.getBoundingClientRect();
+  cv.width = rect.width * ratio; cv.height = rect.height * ratio;
+  const ctx = cv.getContext('2d'); ctx.scale(ratio, ratio);
+  ctx.strokeStyle = '#111'; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  let drawing = false, lastX = 0, lastY = 0;
+  const pos = (e) => { const r = cv.getBoundingClientRect(); const t = e.touches ? e.touches[0] : e; return { x: t.clientX - r.left, y: t.clientY - r.top }; };
+  const start = (e) => { e.preventDefault(); drawing = true; const p = pos(e); lastX = p.x; lastY = p.y; cv.dataset.usado = '1'; };
+  const move  = (e) => { if (!drawing) return; e.preventDefault(); const p = pos(e); ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(p.x, p.y); ctx.stroke(); lastX = p.x; lastY = p.y; };
+  const end   = () => { drawing = false; };
+  cv.onmousedown = start; cv.onmousemove = move; cv.onmouseup = end; cv.onmouseleave = end;
+  cv.ontouchstart = start; cv.ontouchmove = move; cv.ontouchend = end;
+}
+function limparAssinatura(id) {
+  const cv = document.getElementById(id); if (!cv) return;
+  const ctx = cv.getContext('2d'); ctx.clearRect(0, 0, cv.width, cv.height); cv.dataset.usado = '';
+}
+let _encerrandoOsId = null;
+function abrirEncerramento(osId) {
+  const os = ordens.find(o => String(o.id) === String(osId)); if (!os) return;
+  _encerrandoOsId = osId;
+  document.getElementById('enc-titulo').textContent = `OS #${os.id} — ${os.clienteNome}`;
+  document.getElementById('enc-total').textContent = 'R$ ' + (os.total||0).toFixed(2).replace('.',',');
+  document.getElementById('enc-pagto').value = 'Pago';
+  document.getElementById('enc-valor-pago').value = (os.total||0).toFixed(2);
+  document.getElementById('enc-valor-falta').value = '0.00';
+  document.getElementById('enc-forma').value = 'Dinheiro';
+  document.getElementById('enc-obs').value = '';
+  openModal('overlayEncerrar');
+  // canvas precisa ser inicializado depois que o modal aparece (tem largura)
+  setTimeout(() => { limparAssinatura('sigCliente'); limparAssinatura('sigMecanico'); _initSignatureCanvas('sigCliente'); _initSignatureCanvas('sigMecanico'); }, 50);
+}
+function encAtualizarValores() {
+  const os = ordens.find(o => String(o.id) === String(_encerrandoOsId)); if (!os) return;
+  const tipo = document.getElementById('enc-pagto').value;
+  const pagoEl = document.getElementById('enc-valor-pago'); const faltaEl = document.getElementById('enc-valor-falta');
+  const total = os.total || 0;
+  if (tipo === 'Pago')      { pagoEl.value = total.toFixed(2); faltaEl.value = '0.00'; }
+  else if (tipo === 'NaoPago') { pagoEl.value = '0.00'; faltaEl.value = total.toFixed(2); }
+  else { const p = parseFloat(pagoEl.value)||0; faltaEl.value = Math.max(0, total - p).toFixed(2); }
+}
+document.addEventListener('input', (e) => { if (e.target && e.target.id === 'enc-valor-pago') { const os = ordens.find(o => String(o.id) === String(_encerrandoOsId)); if (os) document.getElementById('enc-valor-falta').value = Math.max(0, (os.total||0) - (parseFloat(e.target.value)||0)).toFixed(2); } });
+
+function confirmarEncerramento() {
+  const os = ordens.find(o => String(o.id) === String(_encerrandoOsId)); if (!os) { toast('OS não encontrada','⚠️'); return; }
+  const sigC = document.getElementById('sigCliente'); const sigM = document.getElementById('sigMecanico');
+  if (!sigC.dataset.usado) { toast('Falta a assinatura do CLIENTE','✍️'); return; }
+  if (!sigM.dataset.usado) { toast('Falta a assinatura do MECÂNICO','✍️'); return; }
+  const dadosEnc = {
+    pagto: document.getElementById('enc-pagto').value,
+    valorPago: parseFloat(document.getElementById('enc-valor-pago').value)||0,
+    valorFalta: parseFloat(document.getElementById('enc-valor-falta').value)||0,
+    forma: document.getElementById('enc-forma').value,
+    obs: document.getElementById('enc-obs').value,
+    assinaturaCliente: sigC.toDataURL('image/png'),
+    assinaturaMecanico: sigM.toDataURL('image/png'),
+    encerradoEm: new Date().toISOString()
+  };
+  os.status = 'Entregue';
+  os.encerramento = dadosEnc;
+  localStorage.setItem('oleo_os', JSON.stringify(ordens));
+  enviarOrdemNuvem({ id: os.id, clienteId: os.clienteId, clienteNome: os.clienteNome, clienteCpf: (clientes.find(c=>String(c.id)===String(os.clienteId))?.cpf)||'', clienteTel: os.clienteTel, veiculoModelo: os.veiculo||'', status: 'Entregue', total: os.total, criadoEm: os.criadoEm, obs: (os.obsAdd||'') + ' [Encerrado: '+dadosEnc.pagto+' · falta R$ '+dadosEnc.valorFalta.toFixed(2)+']' });
+  bcPushStatusMec(os.id, 'Entregue');
+  gerarPDFFinal(os, dadosEnc);
+  closeModal('overlayEncerrar'); closeModal('overlayOS');
+  renderOS(); refreshDashboard && refreshDashboard();
+  toast('OS encerrada! PDF gerado — use "Salvar PDF" para salvar no celular.','📄');
+}
+
+function gerarPDFFinal(os, enc) {
+  const cliente = clientes.find(c => String(c.id) === String(os.clienteId)) || { nome: os.clienteNome, tel: os.clienteTel||'' };
+  const cfg = { nome: localStorage.getItem('oleo_cfg_nome')||'Oficina do Léo', tel: localStorage.getItem('oleo_cfg_tel')||'', end: localStorage.getItem('oleo_cfg_end')||'' };
+  const v = cliente.veiculo||{}; const vStr = `${v.marca||''} ${v.modelo||''} ${v.ano||''} — ${v.placa||''}`.trim();
+  const items = os.items||[];
+  const itemsHTML = items.map(i => `<tr><td>${i.desc}</td><td style="text-align:center">${i.tipo}</td><td style="text-align:center">${i.qty}</td><td style="text-align:right">R$ ${(+i.val).toFixed(2).replace('.',',')}</td><td style="text-align:right"><strong>R$ ${(+i.total).toFixed(2).replace('.',',')}</strong></td></tr>`).join('');
+  const pagtoLbl = { 'Pago':'✅ Pago integralmente', 'Parcial':'⚠️ Pagamento parcial', 'NaoPago':'🚫 Não pago' }[enc.pagto] || enc.pagto;
+  const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>OS #${os.id} — Entrega — ${cfg.nome}</title><style>
+    body{font-family:Arial,sans-serif;color:#111;margin:0;padding:0;}
+    .page{max-width:780px;margin:0 auto;padding:32px;}
+    .header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #F5C400;padding-bottom:16px;margin-bottom:20px;}
+    .oficina-name{font-size:22px;font-weight:900;}
+    .oficina-info{font-size:11px;color:#555;margin-top:3px;}
+    .os-num{font-size:24px;font-weight:900;color:#F5C400;}
+    .os-status{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:#D1FAE5;color:#065F46;margin-top:4px;display:inline-block;}
+    .section{margin-bottom:16px;}
+    .section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#888;border-bottom:1px solid #eee;padding-bottom:5px;margin-bottom:10px;}
+    .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+    .info-item label{font-size:9px;text-transform:uppercase;color:#888;}
+    .info-item p{font-size:13px;font-weight:600;margin-top:2px;}
+    table{width:100%;border-collapse:collapse;font-size:12px;}
+    th{background:#F5F5F5;padding:7px 9px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:#666;}
+    td{padding:8px 9px;border-bottom:1px solid #f0f0f0;}
+    .total-row{font-size:15px;font-weight:900;text-align:right;padding:10px 9px 0;border-top:2px solid #F5C400;}
+    .pagto-box{background:#FEFCE8;border:1px solid #F5C400;border-radius:8px;padding:12px 14px;margin-top:10px;font-size:12px;}
+    .pagto-box .row{display:flex;justify-content:space-between;margin:3px 0;}
+    .sig-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:30px;}
+    .sig-block{text-align:center;}
+    .sig-img{height:90px;border-bottom:1.5px solid #111;margin-bottom:4px;display:flex;align-items:flex-end;justify-content:center;}
+    .sig-img img{max-height:90px;max-width:100%;}
+    .sig-name{font-size:11px;color:#555;}
+    .footer{margin-top:30px;border-top:1px solid #eee;padding-top:12px;font-size:10px;color:#aaa;text-align:center;}
+    @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
+  </style></head><body><div class="page">
+    <div class="header">
+      <div><div class="oficina-name">${cfg.nome}</div><div class="oficina-info">${cfg.tel?'📱 '+cfg.tel:''}${cfg.end?' · 📍 '+cfg.end:''}</div></div>
+      <div style="text-align:right"><div class="os-num">OS #${os.id}</div><div class="os-status">ENTREGUE</div><div style="font-size:11px;color:#888;margin-top:4px">Encerrada em ${new Date(enc.encerradoEm).toLocaleDateString('pt-BR')} ${new Date(enc.encerradoEm).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</div></div>
+    </div>
+    <div class="section"><div class="section-title">Cliente</div><div class="info-grid">
+      <div class="info-item"><label>Nome</label><p>${cliente.nome||''}</p></div>
+      <div class="info-item"><label>Telefone</label><p>${cliente.tel||''}</p></div>
+      ${cliente.cpf?`<div class="info-item"><label>CPF</label><p>${cliente.cpf}</p></div>`:''}
+    </div></div>
+    <div class="section"><div class="section-title">Veículo</div><div class="info-grid">
+      <div class="info-item"><label>Veículo</label><p>${vStr||os.veiculo||'—'}</p></div>
+      ${v.km?`<div class="info-item"><label>Km</label><p>${Number(os.km||v.km).toLocaleString('pt-BR')} km</p></div>`:''}
+    </div></div>
+    ${os.descricao?`<div class="section"><div class="section-title">Problema relatado</div><p style="font-size:13px">${os.descricao}</p></div>`:''}
+    ${os.diagnostico?`<div class="section"><div class="section-title">Diagnóstico técnico</div><p style="font-size:13px">${os.diagnostico}</p></div>`:''}
+    <div class="section"><div class="section-title">Serviços e Peças</div>
+      ${items.length?`<table><thead><tr><th>Descrição</th><th>Tipo</th><th>Qtd</th><th style="text-align:right">Valor unit.</th><th style="text-align:right">Total</th></tr></thead><tbody>${itemsHTML}</tbody></table><div class="total-row">Total: R$ ${(os.total||0).toFixed(2).replace('.',',')}</div>`:'<p style="color:#888;font-size:12px">Nenhum serviço adicionado.</p>'}
+    </div>
+    <div class="section"><div class="section-title">Pagamento na entrega</div>
+      <div class="pagto-box">
+        <div class="row"><span><strong>Status:</strong></span><span>${pagtoLbl}</span></div>
+        <div class="row"><span><strong>Forma:</strong></span><span>${enc.forma}</span></div>
+        <div class="row"><span><strong>Valor pago:</strong></span><span>R$ ${enc.valorPago.toFixed(2).replace('.',',')}</span></div>
+        <div class="row"><span><strong>Valor em aberto:</strong></span><span style="color:${enc.valorFalta>0?'#B91C1C':'#065F46'};font-weight:700">R$ ${enc.valorFalta.toFixed(2).replace('.',',')}</span></div>
+        ${enc.obs?`<div style="margin-top:6px;padding-top:6px;border-top:1px dashed #E5E7EB;"><strong>Obs:</strong> ${enc.obs}</div>`:''}
+      </div>
+    </div>
+    <div class="sig-grid">
+      <div class="sig-block"><div class="sig-img"><img src="${enc.assinaturaCliente}" alt="Assinatura cliente"></div><div class="sig-name"><strong>${cliente.nome||''}</strong><br>Cliente</div></div>
+      <div class="sig-block"><div class="sig-img"><img src="${enc.assinaturaMecanico}" alt="Assinatura mecânico"></div><div class="sig-name"><strong>${cfg.nome}</strong><br>Mecânico responsável</div></div>
+    </div>
+    <div class="footer">${cfg.nome} · OS encerrada e assinada digitalmente · Documento gerado em ${new Date().toLocaleString('pt-BR')}<br>Sistema desenvolvido por Stefan Lopes de Aquino</div>
+  </div>
+  <script>window.onload=()=>{ setTimeout(()=>window.print(), 350); }<\/script>
+  </body></html>`;
+  const win = window.open('', '_blank');
+  if (!win) { toast('Permita abrir nova janela para gerar o PDF','⚠️'); return; }
+  win.document.write(html); win.document.close();
+}
 </script>
+
 </body>
 </html>
