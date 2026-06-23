@@ -3886,8 +3886,20 @@ function editarCliente(idx) {
   openModal('overlayCliente');
 }
 
-function excluirCliente(idx) {
+async function excluirCliente(idx) {
   if (!confirm('Excluir este cliente?')) return;
+  const cliente = clientes[idx];
+  if (!cliente) return;
+
+  // Remove da nuvem primeiro
+  try {
+    const res = await apiNuvem({ acao: 'deletarCliente', id: cliente.id });
+    if (res.erro) { toast('Erro ao excluir: ' + res.erro, '⚠️'); return; }
+  } catch(e) {
+    toast('Erro de conexão ao excluir', '⚠️'); return;
+  }
+
+  // Só remove localmente após confirmar que a nuvem excluiu
   clientes.splice(idx, 1);
   localStorage.setItem('oleo_clientes', JSON.stringify(clientes));
   renderClientes();
