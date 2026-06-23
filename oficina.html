@@ -1376,8 +1376,6 @@ function salvarOS() {
   // Notifica o app do cliente (mesma máquina) em tempo real
   bcPushStatusMec(os.id, os.status);
 
-bcPushStatusMec(os.id, os.status);
-
   const novaOS = editingOsIdx === null;
   const mudouStatus = statusAntigo !== null && statusAntigo !== os.status;
 
