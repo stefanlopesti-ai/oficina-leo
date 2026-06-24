@@ -5,6 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>OficinaAppSSJ — Área do Cliente</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<!-- PWA -->
+<link rel="manifest" href="manifest-cliente.json">
+<meta name="theme-color" content="#1A1A1A">
+<link rel="icon" type="image/png" sizes="192x192" href="cliente-192.png">
+<link rel="apple-touch-icon" href="cliente-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Minha Oficina">
 <style>
 :root {
   --accent:      #F5C400;
@@ -148,9 +157,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .toast-wrap{position:fixed;bottom:24px;left:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none;}
 .toast{background:var(--charcoal);color:#fff;padding:13px 18px;border-radius:12px;font-size:0.875rem;font-weight:600;display:flex;align-items:center;gap:10px;animation:toastIn 0.25s ease;pointer-events:all;box-shadow:0 8px 24px rgba(0,0,0,0.3);}
 @keyframes toastIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
-.confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:600;display:none;align-items:center;justify-content:center;padding:20px;}
+.confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:600;display:none;align-items:center;justify-content:center;padding:20px;overflow-y:auto;}
 .confirm-overlay.aberto{display:flex;}
-.confirm-box{background:var(--surface);border-radius:20px;padding:28px 24px;width:100%;max-width:360px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:popIn 0.2s ease;}
+.confirm-box{background:var(--surface);border-radius:20px;padding:28px 24px;width:100%;max-width:360px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:popIn 0.2s ease;max-height:90vh;overflow-y:auto;}
 @keyframes popIn{from{opacity:0;transform:scale(0.92);}to{opacity:1;transform:scale(1);}}
 .confirm-icon{font-size:3rem;margin-bottom:12px;}
 .confirm-title{font-size:1.1rem;font-weight:800;color:var(--text);margin-bottom:8px;}
@@ -162,6 +171,18 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .config-box{background:var(--surface);border-radius:24px;padding:32px 24px;width:100%;max-width:400px;}
 .config-box h2{font-size:1.1rem;font-weight:800;margin-bottom:8px;}
 .config-box p{font-size:0.82rem;color:var(--muted);margin-bottom:20px;line-height:1.5;}
+
+/* ============================================================
+   AÇÕES FIXAS NO RODAPÉ DO MODAL DE OS (aprovar/recusar)
+   ============================================================ */
+.os-acoes-fixas{
+  position:sticky;
+  bottom:0;
+  background:var(--surface);
+  margin:20px -20px -20px;
+  padding:14px 20px 20px;
+  box-shadow:0 -8px 16px -8px rgba(0,0,0,0.08);
+}
 
 /* ============================================================
    CHAT IA
@@ -789,7 +810,7 @@ function renderOSBody(os) {
   }
   let acaoHtml = '';
   if (os.status === 'Orçamento') {
-    acaoHtml = `<div style="margin-top:20px"><button class="btn-aprovar" onclick="pedirConfirmacao('${os.id}')">✅ Aprovar este orçamento</button><button class="btn-recusar" onclick="pedirRecusa('${os.id}')">🚫 Recusar este orçamento</button><p style="font-size:0.72rem;color:var(--muted);text-align:center;margin-top:8px">Ao aprovar, o mecânico será notificado e iniciará o serviço</p></div>`;
+    acaoHtml = `<div class="os-acoes-fixas"><button class="btn-aprovar" onclick="pedirConfirmacao('${os.id}')">✅ Aprovar este orçamento</button><button class="btn-recusar" onclick="pedirRecusa('${os.id}')">🚫 Recusar este orçamento</button><p style="font-size:0.72rem;color:var(--muted);text-align:center;margin-top:8px">Ao aprovar, o mecânico será notificado e iniciará o serviço</p></div>`;
   } else if (os.status === 'Aprovado') {
     acaoHtml = `<div class="aprovado-badge" style="margin-top:16px"><div class="ab-icon">✅</div><div class="ab-text"><strong>Orçamento aprovado</strong><span>Aguardando o mecânico iniciar o serviço${os.aprovadoEm ? ' · '+fmtData(os.aprovadoEm) : ''}</span></div></div>`;
   } else if (os.status === 'Em andamento') {
@@ -955,6 +976,17 @@ async function enviarMsgIA() {
     typing.remove();
     addMsgChat('assistant', '⚠️ Erro de conexão. Tente novamente.');
   }
+}
+
+
+/* ============================================================
+ *  PWA — REGISTRO DO SERVICE WORKER
+ * ============================================================ */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw-cliente.js', { scope: '/cliente.html' })
+      .catch((e) => console.warn('[PWA] Falha ao registrar o service worker:', e));
+  });
 }
 </script>
 </body>
