@@ -6,59 +6,201 @@
 <title>OficinaAppSSJ — Acesso</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
-:root {
-  --accent:      #F5C400;
-  --accent-dark: #D9AC00;
-  --charcoal:    #1A1A1A;
-  --surface:     #FFFFFF;
-  --muted:       #6B7280;
-  --border:      #E5E7EB;
-  --text:        #111827;
+:root{
+  --accent:#F5C400; --accent-dark:#D9AC00;
+  --charcoal:#1A1A1A; --surface:#FFFFFF;
+  --muted:#6B7280; --border:#E5E7EB; --text:#111827;
+  --red:#EF4444; --red-bg:#FEE2E2;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Inter',sans-serif;background:var(--charcoal);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px 20px;-webkit-font-smoothing:antialiased;}
-.box{background:var(--surface);border-radius:24px;padding:36px 28px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,0.3);}
-.logo{text-align:center;margin-bottom:28px;}
-.logo .logo-icon{width:64px;height:64px;background:var(--accent);border-radius:18px;display:inline-flex;align-items:center;justify-content:center;font-size:2rem;margin-bottom:14px;}
-.logo h1{font-size:1.3rem;font-weight:900;color:var(--text);letter-spacing:-0.3px;}
-.logo p{font-size:0.82rem;color:var(--muted);margin-top:4px;}
-.opcoes{display:flex;flex-direction:column;gap:14px;}
-.opcao{display:flex;align-items:center;gap:14px;width:100%;background:#F9FAFB;border:1.5px solid var(--border);border-radius:14px;padding:16px;cursor:pointer;text-align:left;font-family:'Inter',sans-serif;transition:all 0.15s;}
-.opcao:hover{border-color:var(--accent);background:#FFFDF5;}
-.opcao:active{transform:scale(0.98);}
-.opcao .icone{width:48px;height:48px;border-radius:12px;background:var(--charcoal);display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0;}
-.opcao .info strong{display:block;font-size:0.95rem;font-weight:800;color:var(--text);}
-.opcao .info span{font-size:0.78rem;color:var(--muted);}
-.opcao .seta{margin-left:auto;color:var(--muted);font-size:1.1rem;flex-shrink:0;}
-.rodape{text-align:center;font-size:0.7rem;color:var(--muted);margin-top:24px;}
+body{font-family:'Inter',sans-serif;background:var(--charcoal);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;color:var(--text);-webkit-font-smoothing:antialiased;}
+.box{background:var(--surface);border-radius:24px;padding:32px 26px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,0.35);}
+.logo{text-align:center;margin-bottom:22px;}
+.logo-icon{width:64px;height:64px;background:var(--accent);border-radius:18px;display:inline-flex;align-items:center;justify-content:center;font-size:2rem;margin-bottom:12px;}
+.logo h1{font-size:1.3rem;font-weight:900;letter-spacing:-0.3px;}
+.logo p{font-size:.82rem;color:var(--muted);margin-top:4px;}
+
+.tabs{display:flex;gap:6px;background:#F4F5F7;padding:5px;border-radius:12px;margin-bottom:20px;}
+.tab{flex:1;padding:11px;border:0;background:transparent;font:inherit;font-weight:700;font-size:.88rem;color:var(--muted);border-radius:9px;cursor:pointer;}
+.tab.ativa{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.08);}
+
+.form-group{display:flex;flex-direction:column;gap:5px;margin-bottom:13px;}
+.form-group label{font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+.form-group input{padding:13px 14px;border:1.5px solid var(--border);border-radius:11px;font:inherit;font-size:.95rem;background:#fff;outline:none;transition:border-color .15s;}
+.form-group input:focus{border-color:var(--accent);}
+
+.btn{width:100%;padding:14px;border:0;border-radius:12px;background:var(--accent);color:#1A1A1A;font:inherit;font-weight:800;font-size:.98rem;cursor:pointer;transition:background .15s;}
+.btn:hover{background:var(--accent-dark);}
+.btn:disabled{opacity:.6;cursor:not-allowed;}
+
+.erro{display:none;background:var(--red-bg);color:var(--red);padding:10px 12px;border-radius:10px;font-size:.85rem;margin-bottom:12px;font-weight:600;}
+.erro.visivel{display:block;}
+
+.foot{text-align:center;margin-top:18px;font-size:.72rem;color:var(--muted);}
+.dica{font-size:.72rem;color:var(--muted);margin-top:10px;text-align:center;}
 </style>
 </head>
 <body>
+
 <div class="box">
   <div class="logo">
     <div class="logo-icon">🔧</div>
     <h1>OficinaAppSSJ</h1>
-    <p>Escolha como deseja acessar</p>
+    <p>Faça login para continuar</p>
   </div>
-  <div class="opcoes">
-    <button class="opcao" onclick="window.location.href='cliente.html'">
-      <div class="icone">🙋</div>
-      <div class="info">
-        <strong>Área do Cliente</strong>
-        <span>Acompanhe suas ordens de serviço</span>
-      </div>
-      <div class="seta">→</div>
-    </button>
-    <button class="opcao" onclick="window.location.href='oficina.html'">
-      <div class="icone">🛠️</div>
-      <div class="info">
-        <strong>Área do Mecânico</strong>
-        <span>Painel de gestão da oficina</span>
-      </div>
-      <div class="seta">→</div>
-    </button>
+
+  <div class="tabs">
+    <button class="tab ativa" id="tab-cliente" onclick="trocarTab('cliente')">🙋 Cliente</button>
+    <button class="tab" id="tab-mecanico" onclick="trocarTab('mecanico')">🛠️ Mecânico</button>
   </div>
-  <div class="rodape">Sistema desenvolvido por Stefan Lopes de Aquino</div>
+
+  <div class="erro" id="erro"></div>
+
+  <!-- FORM CLIENTE -->
+  <div id="form-cliente">
+    <div class="form-group">
+      <label>CPF</label>
+      <input type="text" id="c-cpf" placeholder="000.000.000-00" inputmode="numeric" oninput="mascCPF(this)">
+    </div>
+    <div class="form-group">
+      <label>Senha</label>
+      <input type="password" id="c-senha" placeholder="Digite sua senha" onkeydown="if(event.key==='Enter')entrar()">
+    </div>
+    <button class="btn" id="btn-c" onclick="entrar()">Entrar</button>
+    <p class="dica">Primeiro acesso? A senha inicial é <b>123456</b>.</p>
+  </div>
+
+  <!-- FORM MECÂNICO -->
+  <div id="form-mecanico" style="display:none;">
+    <div class="form-group">
+      <label>Usuário</label>
+      <input type="text" id="m-usuario" placeholder="seu usuário" autocomplete="username">
+    </div>
+    <div class="form-group">
+      <label>Senha</label>
+      <input type="password" id="m-senha" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')entrar()">
+    </div>
+    <button class="btn" id="btn-m" onclick="entrar()">Entrar</button>
+  </div>
+
+  <div class="foot">Sistema desenvolvido por Stefan Lopes de Aquino</div>
 </div>
+
+<script>
+// ===== CONFIG =====
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyCjk3DJOo1UWPqAKvLQb_jT4ZB71iU9esSlf-R88H-qwU80BxafzQ_lDHZnt66bahm/exec';
+
+const CLIENTE_KEY  = 'oficina_leo_cliente';
+const MECANICO_KEY = 'oleo_mecanico';
+
+let tabAtiva = 'cliente';
+
+// ===== UI =====
+function trocarTab(qual){
+  tabAtiva = qual;
+  document.getElementById('tab-cliente').classList.toggle('ativa', qual==='cliente');
+  document.getElementById('tab-mecanico').classList.toggle('ativa', qual==='mecanico');
+  document.getElementById('form-cliente').style.display  = qual==='cliente' ? '' : 'none';
+  document.getElementById('form-mecanico').style.display = qual==='mecanico'? '' : 'none';
+  esconderErro();
+}
+
+function mascCPF(el){
+  let v = el.value.replace(/\D/g,'').slice(0,11);
+  v = v.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2');
+  el.value = v;
+}
+
+function mostrarErro(msg){
+  const el = document.getElementById('erro');
+  el.textContent = msg; el.classList.add('visivel');
+}
+function esconderErro(){ document.getElementById('erro').classList.remove('visivel'); }
+
+// ===== API =====
+async function api(payload){
+  const res = await fetch(SCRIPT_URL, {
+    method:'POST',
+    body: JSON.stringify(payload),
+    headers: { 'Content-Type':'text/plain;charset=utf-8' }
+  });
+  return res.json();
+}
+
+// Busca em qual oficina o usuário/CPF existe. Tenta primeiro um endpoint
+// global (sem oficinaId). Se não houver, faz fallback varrendo todas as
+// oficinas cadastradas (acao: listarOficinasPublico).
+async function descobrirOficinaECriar(payloadLogin){
+  // 1) tentativa direta sem oficinaId (caso o Apps Script suporte busca global)
+  let res = await api(payloadLogin);
+  if (res && res.sucesso && (res.oficinaId || (res.cliente && res.cliente.oficinaId) || (res.mecanico && res.mecanico.oficinaId))) {
+    return res;
+  }
+
+  // 2) fallback: lista oficinas e tenta uma por uma
+  try {
+    const lista = await api({ acao:'listarOficinasPublico' });
+    const oficinas = (lista && lista.oficinas) || [];
+    for (const of of oficinas){
+      const tent = await api({ ...payloadLogin, oficinaId: of.id });
+      if (tent && tent.sucesso){
+        tent.oficinaId = tent.oficinaId || of.id;
+        return tent;
+      }
+    }
+  } catch(e){ /* ignora — devolve o erro original abaixo */ }
+
+  return res || { sucesso:false, erro:'Usuário ou senha incorretos' };
+}
+
+// ===== LOGIN =====
+async function entrar(){
+  esconderErro();
+  if (tabAtiva === 'cliente') return loginCliente();
+  return loginMecanico();
+}
+
+async function loginCliente(){
+  const cpf   = document.getElementById('c-cpf').value.trim();
+  const senha = document.getElementById('c-senha').value;
+  if (!cpf || !senha) return mostrarErro('Preencha CPF e senha');
+
+  const btn = document.getElementById('btn-c');
+  btn.disabled = true; btn.textContent = 'Entrando...';
+  try{
+    const res = await descobrirOficinaECriar({ acao:'loginCliente', cpf, senha });
+    if (!res.sucesso){ mostrarErro(res.erro || 'CPF ou senha incorretos'); return; }
+    const oficinaId = res.oficinaId || (res.cliente && res.cliente.oficinaId);
+    if (!oficinaId){ mostrarErro('Não foi possível identificar a oficina deste cliente.'); return; }
+    localStorage.setItem(CLIENTE_KEY, JSON.stringify(res.cliente));
+    location.href = 'cliente.html?oficinaId=' + encodeURIComponent(oficinaId);
+  } catch(e){
+    mostrarErro('Erro de conexão. Verifique sua internet.');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Entrar';
+  }
+}
+
+async function loginMecanico(){
+  const usuario = document.getElementById('m-usuario').value.trim();
+  const senha   = document.getElementById('m-senha').value;
+  if (!usuario || !senha) return mostrarErro('Preencha usuário e senha');
+
+  const btn = document.getElementById('btn-m');
+  btn.disabled = true; btn.textContent = 'Entrando...';
+  try{
+    const res = await descobrirOficinaECriar({ acao:'loginMecanico', usuario, senha });
+    if (!res.sucesso){ mostrarErro(res.erro || 'Usuário ou senha incorretos'); return; }
+    const oficinaId = res.oficinaId || (res.mecanico && res.mecanico.oficinaId);
+    if (!oficinaId){ mostrarErro('Não foi possível identificar a oficina deste usuário.'); return; }
+    localStorage.setItem(MECANICO_KEY, JSON.stringify(res.mecanico));
+    location.href = 'oficina.html?oficinaId=' + encodeURIComponent(oficinaId);
+  } catch(e){
+    mostrarErro('Erro de conexão. Verifique sua internet.');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Entrar';
+  }
+}
+</script>
 </body>
 </html>
