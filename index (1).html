@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>OficinaAppSSJ — Acesso</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --accent:      #F5C400;
+  --accent-dark: #D9AC00;
+  --charcoal:    #1A1A1A;
+  --surface:     #FFFFFF;
+  --muted:       #6B7280;
+  --border:      #E5E7EB;
+  --text:        #111827;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',sans-serif;background:var(--charcoal);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px 20px;-webkit-font-smoothing:antialiased;}
+.box{background:var(--surface);border-radius:24px;padding:36px 28px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,0.3);}
+.logo{text-align:center;margin-bottom:28px;}
+.logo .logo-icon{width:64px;height:64px;background:var(--accent);border-radius:18px;display:inline-flex;align-items:center;justify-content:center;font-size:2rem;margin-bottom:14px;}
+.logo h1{font-size:1.3rem;font-weight:900;color:var(--text);letter-spacing:-0.3px;}
+.logo p{font-size:0.82rem;color:var(--muted);margin-top:4px;}
+.opcoes{display:flex;flex-direction:column;gap:14px;}
+.opcao{display:flex;align-items:center;gap:14px;width:100%;background:#F9FAFB;border:1.5px solid var(--border);border-radius:14px;padding:16px;cursor:pointer;text-align:left;font-family:'Inter',sans-serif;transition:all 0.15s;}
+.opcao:hover{border-color:var(--accent);background:#FFFDF5;}
+.opcao:active{transform:scale(0.98);}
+.opcao .icone{width:48px;height:48px;border-radius:12px;background:var(--charcoal);display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0;}
+.opcao .info strong{display:block;font-size:0.95rem;font-weight:800;color:var(--text);}
+.opcao .info span{font-size:0.78rem;color:var(--muted);}
+.opcao .seta{margin-left:auto;color:var(--muted);font-size:1.1rem;flex-shrink:0;}
+.rodape{text-align:center;font-size:0.7rem;color:var(--muted);margin-top:24px;}
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="logo">
+    <div class="logo-icon">🔧</div>
+    <h1>OficinaAppSSJ</h1>
+    <p>Escolha como deseja acessar</p>
+  </div>
+  <div class="opcoes">
+    <button class="opcao" onclick="window.location.href='cliente.html'">
+      <div class="icone">🙋</div>
+      <div class="info">
+        <strong>Área do Cliente</strong>
+        <span>Acompanhe suas ordens de serviço</span>
+      </div>
+      <div class="seta">→</div>
+    </button>
+    <button class="opcao" onclick="window.location.href='oficina.html'">
+      <div class="icone">🛠️</div>
+      <div class="info">
+        <strong>Área do Mecânico</strong>
+        <span>Painel de gestão da oficina</span>
+      </div>
+      <div class="seta">→</div>
+    </button>
+  </div>
+  <div class="rodape">Sistema desenvolvido por Stefan Lopes de Aquino</div>
+</div>
+</body>
+</html>
