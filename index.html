@@ -167,7 +167,7 @@ async function entrar(ev, tipo){
         return;
       }
       localStorage.setItem('oficina_leo_oficina_id', oficinaId);
-      localStorage.setItem('oleo_mecanico', JSON.stringify({
+      localStorage.setItem('oleo_mecanico_' + oficinaId, JSON.stringify({
         ...r.mecanico,
         oficinaNome: r.oficinaNome,
         plano: r.plano,
