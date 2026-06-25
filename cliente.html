@@ -534,6 +534,9 @@ const CLIENTE_KEY    = 'oficina_leo_cliente';
 let   SCRIPT_URL     = localStorage.getItem(SCRIPT_URL_KEY) || 'https://script.google.com/macros/s/AKfycbyCjk3DJOo1UWPqAKvLQb_jT4ZB71iU9esSlf-R88H-qwU80BxafzQ_lDHZnt66bahm/exec';
 
 const OFICINA_ID = new URLSearchParams(location.search).get('oficinaId') || 'OFLEO';
+// Isola a sessao do cliente por oficina, para que diferentes oficinas
+// abertas no mesmo navegador/dispositivo nunca compartilhem login entre si.
+const CLIENTE_KEY_SCOPED = CLIENTE_KEY + '_' + OFICINA_ID;
 
 let clienteLogado  = null;
 let ordens         = [];
@@ -578,7 +581,7 @@ setInterval(() => { if (clienteLogado) carregarOrdens(true); }, 20000);
 window.addEventListener('DOMContentLoaded', function() {
   if (!SCRIPT_URL) { mostrarTela('config'); return; }
   carregarNomeOficina();
-  const salvo = localStorage.getItem(CLIENTE_KEY);
+  const salvo = localStorage.getItem(CLIENTE_KEY_SCOPED);
   if (salvo) {
     clienteLogado = JSON.parse(salvo);
     mostrarTela('home');
@@ -639,7 +642,7 @@ async function fazerLogin() {
       document.getElementById('pa-origem-box').style.display = res.origemConfirmada ? 'none' : '';
       mostrarTela('primeiro-acesso'); return;
     }
-    localStorage.setItem(CLIENTE_KEY, JSON.stringify(clienteLogado));
+    localStorage.setItem(CLIENTE_KEY_SCOPED, JSON.stringify(clienteLogado));
     mostrarTela('home'); carregarOrdens();
   } catch(e) {
     mostrarErro('Erro de conexão. Verifique a URL do Apps Script.');
@@ -666,7 +669,7 @@ async function confirmarPrimeiroAcesso() {
   if (res.erro) { mostrarErro(res.erro, 'erro-primeiro'); return; }
   senhaLoginTemp = '';
   toast('Tudo certo! Você já pode usar o app.', '✅');
-  localStorage.setItem(CLIENTE_KEY, JSON.stringify(clienteLogado));
+  localStorage.setItem(CLIENTE_KEY_SCOPED, JSON.stringify(clienteLogado));
   mostrarTela('home'); carregarOrdens();
 }
 
@@ -872,7 +875,7 @@ async function confirmarRecusa() {
 //  do mesmo cliente.html — que mantinha o oficinaId fixo na URL)
 // ============================================================
 function sair() {
-  localStorage.removeItem(CLIENTE_KEY);
+  localStorage.removeItem(CLIENTE_KEY_SCOPED);
   localStorage.removeItem('oficina_leo_oficina_id');
   clienteLogado = null;
   ordens = [];
