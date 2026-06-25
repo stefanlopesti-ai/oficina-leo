@@ -582,8 +582,22 @@ window.addEventListener('DOMContentLoaded', function() {
   if (!SCRIPT_URL) { mostrarTela('config'); return; }
   carregarNomeOficina();
   const salvo = localStorage.getItem(CLIENTE_KEY_SCOPED);
+  // Detecta redirecionamento de primeiro acesso vindo do index.html
+const paramPA = new URLSearchParams(location.search).get('primeiroAcesso');
+if (paramPA === '1') {
+  const dadosPA = sessionStorage.getItem('oficina_leo_primeiro_acesso_' + OFICINA_ID);
+  if (dadosPA) {
+    const obj = JSON.parse(dadosPA);
+    clienteLogado = obj.cliente;
+    senhaLoginTemp = obj.senhaAtual;
+    document.getElementById('pa-origem-box').style.display = obj.origemConfirmada ? 'none' : '';
+    mostrarTela('primeiro-acesso');
+    return;
+  }
+}
   if (salvo) {
     clienteLogado = JSON.parse(salvo);
+    sessionStorage.removeItem('oficina_leo_primeiro_acesso_' + OFICINA_ID);
     mostrarTela('home');
     carregarOrdens();
   } else {
