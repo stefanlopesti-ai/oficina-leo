@@ -152,7 +152,7 @@ async function entrar(ev, tipo){
         return;
       }
       localStorage.setItem('oficina_leo_oficina_id', oficinaId);
-      localStorage.setItem('oficina_leo_cliente', JSON.stringify({
+      localStorage.setItem('oficina_leo_cliente_' + oficinaId, JSON.stringify({
         ...r.cliente,
         precisaTrocarSenha: r.precisaTrocarSenha,
         origemConfirmada: r.origemConfirmada,
