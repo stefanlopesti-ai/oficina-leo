@@ -151,14 +151,24 @@ async function entrar(ev, tipo){
         btn.disabled = false; btn.textContent = textoOriginal;
         return;
       }
-      localStorage.setItem('oficina_leo_oficina_id', oficinaId);
-      localStorage.setItem('oficina_leo_cliente_' + oficinaId, JSON.stringify({
-        ...r.cliente,
-        precisaTrocarSenha: r.precisaTrocarSenha,
-        origemConfirmada: r.origemConfirmada,
-        oficinaId
-      }));
-      window.location.href = 'cliente.html?oficinaId=' + encodeURIComponent(oficinaId);
+      if (r.precisaTrocarSenha) {
+  // Não salva sessão ainda — deixa o cliente.html pedir a troca de senha
+  // Salva só os dados mínimos para o cliente.html reconhecer o usuário
+  sessionStorage.setItem('oficina_leo_primeiro_acesso_' + oficinaId, JSON.stringify({
+    cliente: r.cliente,
+    origemConfirmada: r.origemConfirmada,
+    cpf: login,
+    senhaAtual: senha
+  }));
+  window.location.href = 'cliente.html?oficinaId=' + encodeURIComponent(oficinaId) + '&primeiroAcesso=1';
+} else {
+  localStorage.setItem('oficina_leo_cliente_' + oficinaId, JSON.stringify({
+    ...r.cliente,
+    origemConfirmada: r.origemConfirmada,
+    oficinaId
+  }));
+  window.location.href = 'cliente.html?oficinaId=' + encodeURIComponent(oficinaId);
+}
     } else {
       const r = await api({ acao:'loginMecanico', oficinaId, usuario: login, senha });
       if (r.erro || !r.ok) {
