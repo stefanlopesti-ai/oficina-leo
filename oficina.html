@@ -1079,7 +1079,21 @@ async function fazerLoginMecanico() {
     if (btn) { btn.disabled = false; btn.textContent = btnLabel || 'Entrar'; }
   }
 }
-function logoutMecanico() { pararPollingOS(); localStorage.removeItem('oleo_mecanico'); location.reload(); }
+
+/* ============================================================
+   SAIR (CORRIGIDO)
+   Antes só fazia location.reload(), o que recarregava a própria
+   oficina.html?oficinaId=XXX — como o oficinaId continuava na URL,
+   o login que aparecia era sempre o da mesma oficina, e não a tela
+   de acesso genérica (index.html) que descobre a oficina pelo
+   usuário/CPF digitado.
+   ============================================================ */
+function logoutMecanico() {
+  pararPollingOS();
+  localStorage.removeItem('oleo_mecanico');
+  localStorage.removeItem('oficina_leo_oficina_id');
+  window.location.href = 'index.html';
+}
 
 function abrirPainelMaster() {
   document.getElementById('authGate').style.display = 'none';
