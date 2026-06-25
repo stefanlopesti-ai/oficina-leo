@@ -957,6 +957,10 @@ mark{background:var(--accent-light);color:var(--text);border-radius:2px;padding:
 /* -------- GOOGLE SHEETS SYNC -------- */
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyCjk3DJOo1UWPqAKvLQb_jT4ZB71iU9esSlf-R88H-qwU80BxafzQ_lDHZnt66bahm/exec';
 const OFICINA_ID = new URLSearchParams(location.search).get('oficinaId') || 'OFLEO';
+// Isola os dados no localStorage por oficina, para que diferentes oficinas
+// abertas no mesmo navegador/dispositivo NUNCA compartilhem clientes, OS,
+// agendamentos, configuracoes ou sessao de mecanico entre si.
+function oKey(base) { return base + '_' + OFICINA_ID; }
 const WHATSAPP_SUPORTE = '5521996656054';
 const BASE_URL_OFICINA = 'https://oficinaappssj.netlify.app/oficina.html';
 const BASE_URL_CLIENTE = 'https://oficinaappssj.netlify.app/cliente.html';
@@ -984,7 +988,7 @@ async function syncComNuvem() {
   try {
     const res = await apiNuvem({ acao: 'syncTotal' });
     if (res.ok) {
-      if (res.clientes && res.clientes.length) { clientes = res.clientes; localStorage.setItem('oleo_clientes', JSON.stringify(clientes)); }
+      if (res.clientes && res.clientes.length) { clientes = res.clientes; localStorage.setItem(oKey('oleo_clientes'), JSON.stringify(clientes)); }
       if (res.ordens && res.ordens.length) {
         // Merge por id preservando campos locais que a nuvem não armazena
         res.ordens.forEach(nova => {
@@ -992,7 +996,7 @@ async function syncComNuvem() {
           if (idx >= 0) ordens[idx] = { ...ordens[idx], status: nova.status };
           else ordens.push(nova);
         });
-        localStorage.setItem('oleo_os', JSON.stringify(ordens));
+        localStorage.setItem(oKey('oleo_os'), JSON.stringify(ordens));
       }
       renderOS(); renderClientes(); refreshDashboard && refreshDashboard(); carregarInfoOficina();
       toast('Sincronizado com a nuvem! ☁️');
@@ -1009,7 +1013,7 @@ async function enviarStatusNuvem(id, status, aprovadoPor) { const res = await ap
    AUTENTICAÇÃO
    ============================================================ */
 const MODO_MASTER = new URLSearchParams(location.search).get('master') === '1';
-let mecanicoLogado = JSON.parse(localStorage.getItem('oleo_mecanico') || 'null');
+let mecanicoLogado = JSON.parse(localStorage.getItem(oKey('oleo_mecanico')) || 'null');
 let adminLogado    = JSON.parse(sessionStorage.getItem('oleo_admin')   || 'null');
 
 function abrirApp() {
@@ -1021,6 +1025,9 @@ function abrirApp() {
   const dashNome = document.getElementById('dashNomeMecanico');
   if (dashNome && mecanicoLogado) dashNome.textContent = mecanicoLogado.nome || mecanicoLogado.usuario;
   carregarInfoOficina();
+  // Sincroniza automaticamente com a planilha ao abrir o painel
+  // (login novo ou sessão já salva), sem precisar apertar o botão Sync.
+  syncComNuvem();
   iniciarPollingOS();
 }
 
@@ -1049,7 +1056,7 @@ function iniciarPollingOS() {
           mudou = true;
         }
       });
-      if (mudou) localStorage.setItem('oleo_os', JSON.stringify(ordens));
+      if (mudou) localStorage.setItem(oKey('oleo_os'), JSON.stringify(ordens));
       alteradas.forEach(os => {
         const ic = os.status === 'Aprovado' ? '✅' : (os.status === 'Em andamento' ? '⚙️' : (os.status === 'Negado' ? '🚫' : (os.status === 'Pronto' ? '🚗' : '🔔')));
         const acao = os.status === 'Aprovado' ? 'APROVOU o orçamento' : (os.status === 'Negado' ? 'RECUSOU o orçamento' : 'atualizou para: ' + os.status);
@@ -1074,7 +1081,7 @@ async function fazerLoginMecanico() {
   try {
     const res = await apiNuvem({ acao: 'loginMecanico', usuario, senha });
     if (res.erro) { erroEl.textContent = res.erro; erroEl.style.display = 'block'; return; }
-    mecanicoLogado = res.mecanico; localStorage.setItem('oleo_mecanico', JSON.stringify(mecanicoLogado)); abrirApp();
+    mecanicoLogado = res.mecanico; localStorage.setItem(oKey('oleo_mecanico'), JSON.stringify(mecanicoLogado)); abrirApp();
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = btnLabel || 'Entrar'; }
   }
@@ -1090,7 +1097,7 @@ async function fazerLoginMecanico() {
    ============================================================ */
 function logoutMecanico() {
   pararPollingOS();
-  localStorage.removeItem('oleo_mecanico');
+  localStorage.removeItem(oKey('oleo_mecanico'));
   localStorage.removeItem('oficina_leo_oficina_id');
   window.location.href = 'index.html';
 }
@@ -1217,9 +1224,9 @@ async function adicionarMecanico() {
 async function removerMecanico(id) { if (!confirm('Remover o acesso deste mecânico?')) return; await apiNuvem({ acao: 'deletarMecanico', id }); carregarEquipe(); }
 
 /* -------- STATE -------- */
-let clientes = JSON.parse(localStorage.getItem('oleo_clientes') || '[]');
-let ordens   = JSON.parse(localStorage.getItem('oleo_os')       || '[]');
-let osCounter = parseInt(localStorage.getItem('oleo_osCounter') || '1000');
+let clientes = JSON.parse(localStorage.getItem(oKey('oleo_clientes')) || '[]');
+let ordens   = JSON.parse(localStorage.getItem(oKey('oleo_os'))       || '[]');
+let osCounter = parseInt(localStorage.getItem(oKey('oleo_osCounter')) || '1000');
 let editingClienteIdx = null;
 let editingOsIdx      = null;
 let currentOsStatusFilter = 'todos';
@@ -1343,7 +1350,7 @@ async function salvarCliente() {
   const cliente = { id: ehNovo ? Date.now() : clientes[editingClienteIdx].id, nome, cpf: document.getElementById('cli-cpf').value, nasc: document.getElementById('cli-nasc').value, tel, email: document.getElementById('cli-email').value, end: document.getElementById('cli-end').value, obsCliente: document.getElementById('cli-obs-cliente').value, obsInterno: document.getElementById('cli-obs-interno').value, origem: document.getElementById('cli-origem').value, veiculo: { placa: document.getElementById('vei-placa').value.toUpperCase(), marca: document.getElementById('vei-marca').value, modelo: document.getElementById('vei-modelo').value, ano: document.getElementById('vei-ano').value, cor: document.getElementById('vei-cor').value, comb: document.getElementById('vei-comb').value, km: document.getElementById('vei-km').value, chassi: document.getElementById('vei-chassi').value, proxRev: document.getElementById('vei-proxrev').value, proxRevData: document.getElementById('vei-proxrev-data').value, ultRev: document.getElementById('vei-ultrev').value, ultRevData: document.getElementById('vei-ultrev-data').value } };
   if (ehNovo) { const res = await enviarClienteNuvem(cliente); if (res.erro) { carregarInfoOficina(); return; } clientes.push(cliente); toast('Cliente cadastrado com sucesso!'); }
   else { clientes[editingClienteIdx] = cliente; toast('Cliente atualizado!'); enviarClienteNuvem(cliente); }
-  localStorage.setItem('oleo_clientes', JSON.stringify(clientes)); closeModal('overlayCliente'); renderClientes(); refreshDashboard(); carregarInfoOficina();
+  localStorage.setItem(oKey('oleo_clientes'), JSON.stringify(clientes)); closeModal('overlayCliente'); renderClientes(); refreshDashboard(); carregarInfoOficina();
 }
 
 function editarCliente(idx) {
@@ -1353,7 +1360,7 @@ function editarCliente(idx) {
   const v = c.veiculo || {}; document.getElementById('vei-placa').value = v.placa||''; document.getElementById('vei-marca').value = v.marca||''; if (v.marca) populateModelos(v.marca); document.getElementById('vei-modelo').value = v.modelo||''; document.getElementById('vei-ano').value = v.ano||''; document.getElementById('vei-cor').value = v.cor||''; document.getElementById('vei-comb').value = v.comb||''; document.getElementById('vei-km').value = v.km||''; document.getElementById('vei-chassi').value = v.chassi||''; document.getElementById('vei-proxrev').value = v.proxRev||''; document.getElementById('vei-proxrev-data').value = v.proxRevData||''; document.getElementById('vei-ultrev').value = v.ultRev||''; document.getElementById('vei-ultrev-data').value = v.ultRevData||'';
   resetTab('cliente','pessoal'); openModal('overlayCliente');
 }
-function excluirCliente(idx) { if (!confirm('Excluir este cliente?')) return; clientes.splice(idx,1); localStorage.setItem('oleo_clientes', JSON.stringify(clientes)); renderClientes(); refreshDashboard(); toast('Cliente removido', '🗑️'); }
+function excluirCliente(idx) { if (!confirm('Excluir este cliente?')) return; clientes.splice(idx,1); localStorage.setItem(oKey('oleo_clientes'), JSON.stringify(clientes)); renderClientes(); refreshDashboard(); toast('Cliente removido', '🗑️'); }
 function filtrarClientes(q) { renderClientes(q); }
 function renderClientes(q) {
   q = q || '';
@@ -1395,7 +1402,7 @@ function salvarOS() {
   const statusAntigo = editingOsIdx!==null ? ordens[editingOsIdx].status : null;
   const os = { id: editingOsIdx!==null?ordens[editingOsIdx].id:(osCounter++), clienteId, clienteNome: cliente.nome, clienteTel: cliente.tel, veiculo: document.getElementById('os-veiculo').value, veiculoObj: cliente.veiculo, status: document.getElementById('os-status').value, dataEntrada: document.getElementById('os-data-entrada').value, previsao: document.getElementById('os-previsao').value, km: document.getElementById('os-km').value, descricao: document.getElementById('os-descricao').value, diagnostico: document.getElementById('os-diagnostico').value, obsAdd: document.getElementById('os-obs-add').value, items, total: calcTotal(), criadoEm: editingOsIdx!==null?ordens[editingOsIdx].criadoEm:new Date().toISOString(), encerramento: editingOsIdx!==null?ordens[editingOsIdx].encerramento:null };
   if (editingOsIdx!==null) { ordens[editingOsIdx]=os; } else { ordens.push(os); }
-  localStorage.setItem('oleo_os', JSON.stringify(ordens)); localStorage.setItem('oleo_osCounter', osCounter);
+  localStorage.setItem(oKey('oleo_os'), JSON.stringify(ordens)); localStorage.setItem(oKey('oleo_osCounter'), osCounter);
   enviarOrdemNuvem({ id: os.id, clienteId: os.clienteId, clienteNome: os.clienteNome, clienteCpf: cliente.cpf||'', clienteTel: os.clienteTel, veiculoId: cliente.veiculo?.id||'', veiculoPlaca: cliente.veiculo?.placa||'', veiculoModelo: os.veiculo||'', problema: os.descricao||'', status: os.status, total: os.total, criadoEm: os.criadoEm, obs: os.obsAdd||'', itens: os.items.map(i => ({ tipo: i.tipo==='Serviço'?'servico':'peca', desc: i.desc, qtd: i.qty, valorUnit: i.val, valorTotal: i.total })) });
 
  // Notifica o app do cliente (mesma máquina) em tempo real
@@ -1431,7 +1438,7 @@ function salvarOS() {
 function gerarPDF() {
   const clienteId = document.getElementById('os-cliente').value; const cliente = clientes.find(c => String(c.id) === String(clienteId));
   if (!cliente) { toast('Selecione um cliente para gerar PDF', '⚠️'); return; }
-  const cfg = { nome: localStorage.getItem('oleo_cfg_nome')||'Oficina do Léo', tel: localStorage.getItem('oleo_cfg_tel')||'', end: localStorage.getItem('oleo_cfg_end')||'' };
+  const cfg = { nome: localStorage.getItem(oKey('oleo_cfg_nome'))||'Oficina do Léo', tel: localStorage.getItem(oKey('oleo_cfg_tel'))||'', end: localStorage.getItem(oKey('oleo_cfg_end'))||'' };
   const items = []; document.querySelectorAll('#itemsTbody tr').forEach(tr => { const desc = tr.querySelector('input[type="text"]')?.value||''; const tipo = tr.querySelector('select')?.value||''; const inputs = tr.querySelectorAll('input[type="number"]'); const qty = parseFloat(inputs[0]?.value)||1; const val = parseFloat(inputs[1]?.value)||0; if (desc) items.push({ desc, tipo, qty, val, total: qty*val }); });
   const total = calcTotal(); const osId = editingOsIdx!==null?ordens[editingOsIdx].id:osCounter; const status = document.getElementById('os-status').value; const entrada = document.getElementById('os-data-entrada').value; const descricao = document.getElementById('os-descricao').value; const diagnostico = document.getElementById('os-diagnostico').value; const v = cliente.veiculo||{}; const vStr = `${v.marca||''} ${v.modelo||''} ${v.ano||''} — ${v.placa||''}`.trim();
   const itemsHTML = items.map(i => `<tr><td>${i.desc}</td><td style="text-align:center">${i.tipo}</td><td style="text-align:center">${i.qty}</td><td style="text-align:right">R$ ${i.val.toFixed(2).replace('.',',')}</td><td style="text-align:right"><strong>R$ ${i.total.toFixed(2).replace('.',',')}</strong></td></tr>`).join('');
@@ -1444,7 +1451,7 @@ function enviarWhatsApp() {
   const clienteId = document.getElementById('os-cliente').value; const cliente = clientes.find(c => String(c.id) === String(clienteId));
   if (!cliente) { toast('Selecione um cliente primeiro', '⚠️'); return; }
   const tel = cliente.tel.replace(/\D/g,''); if (!tel) { toast('Este cliente não tem telefone cadastrado', '⚠️'); return; }
-  const cfg = { nome: localStorage.getItem('oleo_cfg_nome')||'Oficina do Léo' }; const status = document.getElementById('os-status').value; const v = cliente.veiculo||{}; const vStr = `${v.marca||''} ${v.modelo||''} — ${v.placa||''}`.trim(); const total = calcTotal(); const osId = editingOsIdx!==null?ordens[editingOsIdx].id:osCounter;
+  const cfg = { nome: localStorage.getItem(oKey('oleo_cfg_nome'))||'Oficina do Léo' }; const status = document.getElementById('os-status').value; const v = cliente.veiculo||{}; const vStr = `${v.marca||''} ${v.modelo||''} — ${v.placa||''}`.trim(); const total = calcTotal(); const osId = editingOsIdx!==null?ordens[editingOsIdx].id:osCounter;
   const statusMsg = { 'Orçamento':`Olá, *${cliente.nome}*! 👋\n\nSegue o *orçamento #${osId}* do seu veículo *${vStr}* aqui na *${cfg.nome}*.\n\n💰 *Total: R$ ${total.toFixed(2).replace('.',',')}*\n\nAguardamos sua aprovação para iniciar o serviço. 🔧`, 'Aprovado':`Olá, *${cliente.nome}*! ✅\n\nOrçamento *#${osId}* aprovado! Já iniciamos os trabalhos no seu *${vStr}*.\n\nAvisaremos assim que ficar pronto. 🔧`, 'Em andamento':`Olá, *${cliente.nome}*! ⚙️\n\nSeu veículo *${vStr}* está em serviço aqui na *${cfg.nome}* (OS #${osId}).\n\nAvisaremos assim que estiver pronto!`, 'Pronto':`Olá, *${cliente.nome}*! 🎉\n\nSeu veículo *${vStr}* está *PRONTO* para retirada aqui na *${cfg.nome}*!\n\n💰 *Total: R$ ${total.toFixed(2).replace('.',',')}*\n\nAguardamos você! 😊`, 'Entregue':`Olá, *${cliente.nome}*! Obrigado por confiar na *${cfg.nome}*! 🙏\n\nSeu veículo *${vStr}* foi entregue com sucesso.\n\nVolte sempre! 🔧` };
   const msg = statusMsg[status]||statusMsg['Em andamento'];
   window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(msg)}`, '_blank'); toast('Abrindo WhatsApp...', '📱');
@@ -1504,15 +1511,15 @@ function renderFinanceiro() {
 }
 
 /* -------- CONFIG -------- */
-function salvarConfig() { localStorage.setItem('oleo_cfg_nome', document.getElementById('cfgNomeOficina').value); localStorage.setItem('oleo_cfg_tel', document.getElementById('cfgTelOficina').value); localStorage.setItem('oleo_cfg_end', document.getElementById('cfgEnderecoOficina').value); toast('Configurações salvas!'); }
+function salvarConfig() { localStorage.setItem(oKey('oleo_cfg_nome'), document.getElementById('cfgNomeOficina').value); localStorage.setItem(oKey('oleo_cfg_tel'), document.getElementById('cfgTelOficina').value); localStorage.setItem(oKey('oleo_cfg_end'), document.getElementById('cfgEnderecoOficina').value); toast('Configurações salvas!'); }
 
 /* -------- AGENDAMENTOS -------- */
-let agendamentos = JSON.parse(localStorage.getItem('oleo_agendamentos')||'[]');
+let agendamentos = JSON.parse(localStorage.getItem(oKey('oleo_agendamentos'))||'[]');
 let calYear, calMonth, calSelectedDate, agSelectedTime = null;
 function openNovoAgendamento(dataPreSel) { const sel = document.getElementById('ag-cliente'); sel.innerHTML = '<option value="">Selecione...</option>'+clientes.map(c => `<option value="${c.id}">${c.nome}</option>`).join(''); document.getElementById('ag-data').value = dataPreSel||(calSelectedDate?calSelectedDate:new Date().toISOString().split('T')[0]); document.getElementById('ag-servico').value = ''; document.getElementById('ag-obs').value = ''; agSelectedTime = null; renderTimeGrid(document.getElementById('ag-data').value); document.getElementById('ag-data').addEventListener('change', e => renderTimeGrid(e.target.value)); openModal('overlayAgendamento'); }
 function renderTimeGrid(data) { const horarios = ['07:30','08:00','08:30','09:00','09:30','10:00','10:30','11:00','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30']; const ocupados = agendamentos.filter(a => a.data===data).map(a => a.hora); const grid = document.getElementById('agTimeGrid'); grid.innerHTML = ''; horarios.forEach(h => { const oc = ocupados.includes(h); const sel = agSelectedTime===h; const div = document.createElement('div'); div.className = 'time-slot'+(oc?' ocupado':'')+(sel?' active':''); div.textContent = h; if (!oc) div.addEventListener('click', () => selecionarHora(h)); grid.appendChild(div); }); }
 function selecionarHora(h) { agSelectedTime = h; renderTimeGrid(document.getElementById('ag-data').value); }
-function salvarAgendamento() { const clienteId = document.getElementById('ag-cliente').value; const cliente = clientes.find(c => String(c.id) === String(clienteId)); if (!cliente) { toast('Selecione um cliente', '⚠️'); return; } if (!agSelectedTime) { toast('Selecione um horário', '⚠️'); return; } const data = document.getElementById('ag-data').value; if (!data) { toast('Selecione uma data', '⚠️'); return; } agendamentos.push({ id: Date.now(), clienteId, clienteNome: cliente.nome, clienteTel: cliente.tel, veiculo: cliente.veiculo?`${cliente.veiculo.marca} ${cliente.veiculo.modelo}`:'', data, hora: agSelectedTime, servico: document.getElementById('ag-servico').value, obs: document.getElementById('ag-obs').value, status: 'Confirmado' }); localStorage.setItem('oleo_agendamentos', JSON.stringify(agendamentos)); closeModal('overlayAgendamento'); renderCalendario(); if (calSelectedDate===data) renderAgendaDia(data); toast('Agendamento salvo!', '📅'); refreshDashboard(); }
+function salvarAgendamento() { const clienteId = document.getElementById('ag-cliente').value; const cliente = clientes.find(c => String(c.id) === String(clienteId)); if (!cliente) { toast('Selecione um cliente', '⚠️'); return; } if (!agSelectedTime) { toast('Selecione um horário', '⚠️'); return; } const data = document.getElementById('ag-data').value; if (!data) { toast('Selecione uma data', '⚠️'); return; } agendamentos.push({ id: Date.now(), clienteId, clienteNome: cliente.nome, clienteTel: cliente.tel, veiculo: cliente.veiculo?`${cliente.veiculo.marca} ${cliente.veiculo.modelo}`:'', data, hora: agSelectedTime, servico: document.getElementById('ag-servico').value, obs: document.getElementById('ag-obs').value, status: 'Confirmado' }); localStorage.setItem(oKey('oleo_agendamentos'), JSON.stringify(agendamentos)); closeModal('overlayAgendamento'); renderCalendario(); if (calSelectedDate===data) renderAgendaDia(data); toast('Agendamento salvo!', '📅'); refreshDashboard(); }
 function initCalendario() { const now = new Date(); calYear = now.getFullYear(); calMonth = now.getMonth(); calSelectedDate = now.toISOString().split('T')[0]; renderCalendario(); renderAgendaDia(calSelectedDate); }
 function calNav(dir) { calMonth += dir; if (calMonth>11) { calMonth=0; calYear++; } if (calMonth<0) { calMonth=11; calYear--; } renderCalendario(); }
 function renderCalendario() { const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']; document.getElementById('calMonthLabel').textContent = `${meses[calMonth]} ${calYear}`; const primeiro = new Date(calYear,calMonth,1); const ultimo = new Date(calYear,calMonth+1,0); const hoje = new Date().toISOString().split('T')[0]; const daysWithEvents = new Set(agendamentos.map(a => a.data)); let html = ''; for (let i=0;i<primeiro.getDay();i++) { const d = new Date(calYear,calMonth,-primeiro.getDay()+i+1); html += `<div class="cal-day other-month">${d.getDate()}</div>`; } for (let d=1;d<=ultimo.getDate();d++) { const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; const isToday = dateStr===hoje; const isSel = dateStr===calSelectedDate; const hasEv = daysWithEvents.has(dateStr); html += `<div class="cal-day ${isToday&&!isSel?'today':''} ${isSel?'selected':''} ${hasEv?'has-event':''}" onclick="selectCalDay('${dateStr}')">${d}</div>`; } document.getElementById('calDays').innerHTML = html; }
@@ -1736,9 +1743,9 @@ function filtrarOS(q) { renderOS(q); }
   const savedTheme = localStorage.getItem('oleo_theme')||'light'; document.body.setAttribute('data-theme', savedTheme); document.documentElement.setAttribute('data-theme', savedTheme);
   fontSize = parseInt(localStorage.getItem('oleo_fontSize')||'15'); applyFontSize();
   const now = new Date(); document.getElementById('dashDate').textContent = now.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-  const cfgNome = localStorage.getItem('oleo_cfg_nome'); if (cfgNome) document.getElementById('cfgNomeOficina').value = cfgNome;
-  const cfgTel = localStorage.getItem('oleo_cfg_tel'); if (cfgTel) document.getElementById('cfgTelOficina').value = cfgTel;
-  const cfgEnd = localStorage.getItem('oleo_cfg_end'); if (cfgEnd) document.getElementById('cfgEnderecoOficina').value = cfgEnd;
+  const cfgNome = localStorage.getItem(oKey('oleo_cfg_nome')); if (cfgNome) document.getElementById('cfgNomeOficina').value = cfgNome;
+  const cfgTel = localStorage.getItem(oKey('oleo_cfg_tel')); if (cfgTel) document.getElementById('cfgTelOficina').value = cfgTel;
+  const cfgEnd = localStorage.getItem(oKey('oleo_cfg_end')); if (cfgEnd) document.getElementById('cfgEnderecoOficina').value = cfgEnd;
   refreshDashboard();
 })();
 
@@ -1756,7 +1763,7 @@ try {
         ordens[idx].status = m.status;
         if (m.status === 'Aprovado') ordens[idx].aprovadoEm = new Date().toISOString();
         if (m.status === 'Negado')   ordens[idx].negadoEm   = new Date().toISOString();
-        localStorage.setItem('oleo_os', JSON.stringify(ordens));
+        localStorage.setItem(oKey('oleo_os'), JSON.stringify(ordens));
         const ic = m.status === 'Aprovado' ? '✅' : (m.status === 'Negado' ? '🚫' : '🔔');
         toast(`${ic} OS #${String(m.osId).slice(-6)} — cliente ${m.status === 'Aprovado' ? 'APROVOU o orçamento' : (m.status === 'Negado' ? 'RECUSOU o orçamento' : 'atualizou para ' + m.status)}`);
         // Se o modal da OS estiver aberto, reflete o novo status
@@ -1838,7 +1845,7 @@ function confirmarEncerramento() {
   };
   os.status = 'Entregue';
   os.encerramento = dadosEnc;
-  localStorage.setItem('oleo_os', JSON.stringify(ordens));
+  localStorage.setItem(oKey('oleo_os'), JSON.stringify(ordens));
   enviarOrdemNuvem({ id: os.id, clienteId: os.clienteId, clienteNome: os.clienteNome, clienteCpf: (clientes.find(c=>String(c.id)===String(os.clienteId))?.cpf)||'', clienteTel: os.clienteTel, veiculoModelo: os.veiculo||'', status: 'Entregue', total: os.total, criadoEm: os.criadoEm, obs: (os.obsAdd||'') + ' [Encerrado: '+dadosEnc.pagto+' · falta R$ '+dadosEnc.valorFalta.toFixed(2)+']' });
   bcPushStatusMec(os.id, 'Entregue');
   gerarPDFFinal(os, dadosEnc);
@@ -1849,7 +1856,7 @@ function confirmarEncerramento() {
 
 function gerarPDFFinal(os, enc) {
   const cliente = clientes.find(c => String(c.id) === String(os.clienteId)) || { nome: os.clienteNome, tel: os.clienteTel||'' };
-  const cfg = { nome: localStorage.getItem('oleo_cfg_nome')||'Oficina do Léo', tel: localStorage.getItem('oleo_cfg_tel')||'', end: localStorage.getItem('oleo_cfg_end')||'' };
+  const cfg = { nome: localStorage.getItem(oKey('oleo_cfg_nome'))||'Oficina do Léo', tel: localStorage.getItem(oKey('oleo_cfg_tel'))||'', end: localStorage.getItem(oKey('oleo_cfg_end'))||'' };
   const v = cliente.veiculo||{}; const vStr = `${v.marca||''} ${v.modelo||''} ${v.ano||''} — ${v.placa||''}`.trim();
   const items = os.items||[];
   const itemsHTML = items.map(i => `<tr><td>${i.desc}</td><td style="text-align:center">${i.tipo}</td><td style="text-align:center">${i.qty}</td><td style="text-align:right">R$ ${(+i.val).toFixed(2).replace('.',',')}</td><td style="text-align:right"><strong>R$ ${(+i.total).toFixed(2).replace('.',',')}</strong></td></tr>`).join('');
