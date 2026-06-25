@@ -867,9 +867,18 @@ async function confirmarRecusa() {
 }
 
 // ============================================================
-//  SAIR
+//  SAIR  (CORRIGIDO: agora redireciona pro index.html, que descobre
+//  a oficina automaticamente, em vez de só trocar de "tela" dentro
+//  do mesmo cliente.html — que mantinha o oficinaId fixo na URL)
 // ============================================================
-function sair() { localStorage.removeItem(CLIENTE_KEY); clienteLogado=null; ordens=[]; iaChatHistorico=[]; const iaMsgs=document.getElementById('ia-msgs'); if (iaMsgs) iaMsgs.innerHTML='<div class="ia-msg-bot">Olá! Posso te ajudar com informações sobre suas ordens de serviço. O que você quer saber? 😊</div>'; mostrarTela('login'); ['login-cpf','login-senha'].forEach(id => document.getElementById(id).value=''); }
+function sair() {
+  localStorage.removeItem(CLIENTE_KEY);
+  localStorage.removeItem('oficina_leo_oficina_id');
+  clienteLogado = null;
+  ordens = [];
+  iaChatHistorico = [];
+  window.location.href = 'index.html';
+}
 
 // ============================================================
 //  API
